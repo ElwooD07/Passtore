@@ -29,18 +29,24 @@ SOURCES += \
         MainWindow.cpp \
     ResourcesListWidget.cpp \
     Resource.cpp \
-    ResourceWidget.cpp
+    ResourceWidget.cpp \
+    stdafx.cpp
 
 HEADERS += \
         MainWindow.h \
     ResourcesListWidget.h \
     Resource.h \
-    ResourceWidget.h
+    ResourceWidget.h \
+    stdafx.h
 
 FORMS += \
         MainWindow.ui \
     ResourcesListWidget.ui \
     ResourceWidget.ui
+
+CONFIG += precompile_header
+PRECOMPILED_HEADER = stdafx.h
+PRECOMPILED_SOURCE = stdafx.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
