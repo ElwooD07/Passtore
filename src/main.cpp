@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "Widgets/MainWindow.h"
 #include <QApplication>
 #include "Database.h"
 #include <QMessageBox>

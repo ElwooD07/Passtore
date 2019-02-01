@@ -26,29 +26,30 @@ CONFIG += c++14
 
 SOURCES += \
         main.cpp \
-        MainWindow.cpp \
-    ResourcesListWidget.cpp \
+        Widgets/MainWindow.cpp \
+    Widgets/ResourcesListWidget.cpp \
+    Widgets/ResourceWidget.cpp \
     Resource.cpp \
-    ResourceWidget.cpp \
     stdafx.cpp \
     ../3rd-party/TinyAES/aes.c \
     Cryptor.cpp \
     Database.cpp
 
 HEADERS += \
-        MainWindow.h \
-    ResourcesListWidget.h \
+        Widgets/MainWindow.h \
+    Widgets/ResourcesListWidget.h \
+    Widgets/ResourceWidget.h \
     Resource.h \
-    ResourceWidget.h \
     stdafx.h \
     ../3rd-party/TinyAES/aes.hpp \
     Cryptor.h \
     Database.h
 
+UI_DIR = Ui
 FORMS += \
-        MainWindow.ui \
-    ResourcesListWidget.ui \
-    ResourceWidget.ui
+        Ui/MainWindow.ui \
+    Ui/ResourcesListWidget.ui \
+    Ui/ResourceWidget.ui
 
 INCLUDEPATH += ../3rd-party/TinyAES
 
