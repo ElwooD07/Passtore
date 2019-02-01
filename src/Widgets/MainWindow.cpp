@@ -3,12 +3,13 @@
 #include "ResourcesListWidget.h"
 #include "ResourceWidget.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget* parent, Database& database)
     : QMainWindow(parent)
 {
     m_ui.setupUi(this);
     QSplitter* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->addWidget(new ResourcesListWidget(splitter));
+    ResourcesModel* model = new ResourcesModel(this, database);
+    splitter->addWidget(new ResourcesListWidget(splitter, model));
     splitter->addWidget(new ResourceWidget(splitter));
     splitter->setChildrenCollapsible(false);
     splitter->handle(1)->setStyleSheet("background: #aaaaaa;");

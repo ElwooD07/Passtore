@@ -33,7 +33,9 @@ SOURCES += \
     stdafx.cpp \
     ../3rd-party/TinyAES/aes.c \
     Cryptor.cpp \
-    Database.cpp
+    Database.cpp \
+    ResourcesModel.cpp \
+    DatabaseQueries.cpp
 
 HEADERS += \
         Widgets/MainWindow.h \
@@ -43,7 +45,9 @@ HEADERS += \
     stdafx.h \
     ../3rd-party/TinyAES/aes.hpp \
     Cryptor.h \
-    Database.h
+    Database.h \
+    ResourcesModel.h \
+    DatabaseQueries.h
 
 UI_DIR = Ui
 FORMS += \

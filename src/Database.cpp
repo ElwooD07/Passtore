@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Database.h"
+#include "DatabaseQueries.h"
 
 namespace
 {
@@ -24,6 +25,14 @@ Database::Database()
 void Database::Open(const QString& path, const QString& password)
 {
     CreateNewConnection(path, password);
+    // Uncomment it for tests when the database is empty
+    /*Resource res;
+    res.SetValue(ResourcePropertyResource, "ResName");
+    res.SetValue(ResourcePropertyPassword, "arbadakarba");
+    res.SetValue(ResourcePropertyDescription, "bla-bla-bla");
+    int id = AddResource(res);
+    qDebug() << id;*/
+
     // TODO : Collect data from DB
 }
 
@@ -63,6 +72,81 @@ void Database::ChangePassword(const QString& newPassword)
     }
 }
 
+ResourceDefinitions Database::GetResourceDefinitions()
+{
+    QSqlQuery query;
+    if (!query.exec(MakeResourceSelectDefinitionsQuery()))
+    {
+        throw std::runtime_error(QObject::tr("Unable to get data from the database: %1").arg(query.lastError().text()).toStdString());
+    }
+
+    ResourceDefinitions result;
+    if (query.first())
+    {
+        do {
+            result.push_back( { query.value(0).toInt(), m_cryptor.DecryptAsString(query.value(1).toByteArray()) } );
+        } while(query.next());
+    }
+    return result;
+}
+
+Resource Database::GetResource(int id)
+{
+    QSqlQuery query;
+    if (!query.exec(MakeResourceSelectQuery(id)) || !query.first())
+    {
+        throw std::runtime_error(QObject::tr("Unable to get resource record from the database: %1").arg(query.lastError().text()).toStdString());
+    }
+
+    Resource result;
+    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    {
+        result.SetValue(static_cast<ResourceProperty>(i), m_cryptor.DecryptAsString(query.value(i).toByteArray()));
+    }
+    return result;
+}
+
+QString Database::GetResourcePropertyValue(int id, ResourceProperty prop)
+{
+    QSqlQuery query;
+    if (!query.exec(MakeResourceSelectPropertyQuery(id, prop)) || !query.first())
+    {
+        throw std::runtime_error(QObject::tr("Unable to get resource record from the database: %1").arg(query.lastError().text()).toStdString());
+    }
+    return m_cryptor.DecryptAsString(query.value(0).toByteArray());
+}
+
+void Database::SetResource(int id, const Resource& resource)
+{
+    QSqlQuery query;
+    query.prepare(MakeResourceUpdateQuery(id));
+    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    {
+        query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
+    }
+
+    if (!query.exec())
+    {
+        throw std::runtime_error(QObject::tr("Unable to write resource to the database: %1").arg(query.lastError().text()).toStdString());
+    }
+}
+
+int Database::AddResource(const Resource& resource)
+{
+    QSqlQuery query;
+    query.prepare(MakeResourceInsertQuery());
+    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    {
+        query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
+    }
+
+    if (!query.exec())
+    {
+        throw std::runtime_error(QObject::tr("Unable to write resource to the database: %1").arg(query.lastError().text()).toStdString());
+    }
+    return query.lastInsertId().toInt();
+}
+
 void Database::CreateNewConnection(const QString& path, const QString& password)
 {
     if (m_db.isOpen())
@@ -77,7 +161,7 @@ void Database::CreateNewConnection(const QString& path, const QString& password)
     }
 
     QSqlQuery query;
-    if (query.exec("SELECT count(*), phrase, keys FROM Metadata LIMIT 1;") &&
+    if (query.exec("SELECT count(*), phrase, keys FROM Metadata;") &&
         query.first())
     {
         // Existing proper database is opened
@@ -120,15 +204,7 @@ void Database::CreateNewConnection(const QString& path, const QString& password)
 
         ChangePassword(password);
 
-        if (!query.exec("CREATE TABLE 'Resources' ( \
-            'Id' INTEGER PRIMARY KEY, \
-            'Resource' BLOB, \
-            'Description' BLOB, \
-            'Email' BLOB, \
-            'Username' BLOB, \
-            'Password' BLOB, \
-            'Additional' BLOB);")
-            )
+        if (!query.exec(MakeResourcesTableCreateQuery()))
         {
             throw std::runtime_error(QObject::tr("Unable to create database structure: %1").arg(query.lastError().text()).toStdString());
         }

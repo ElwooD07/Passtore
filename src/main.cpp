@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
         Database db;
         db.Open("test", "000");
 
-        MainWindow w(nullptr);
+        MainWindow w(nullptr, db);
         w.show();
 
         return a.exec();
