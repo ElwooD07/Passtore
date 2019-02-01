@@ -1,0 +1,3 @@
+[submodule "3rd-party/TinyAES"]
+	path = 3rd-party/TinyAES
+	url = https://github.com/kokke/tiny-AES-c.git

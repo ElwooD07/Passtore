@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,7 +22,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-CONFIG += c++11
+CONFIG += c++14
 
 SOURCES += \
         main.cpp \
@@ -30,19 +30,27 @@ SOURCES += \
     ResourcesListWidget.cpp \
     Resource.cpp \
     ResourceWidget.cpp \
-    stdafx.cpp
+    stdafx.cpp \
+    ../3rd-party/TinyAES/aes.c \
+    Cryptor.cpp \
+    Database.cpp
 
 HEADERS += \
         MainWindow.h \
     ResourcesListWidget.h \
     Resource.h \
     ResourceWidget.h \
-    stdafx.h
+    stdafx.h \
+    ../3rd-party/TinyAES/aes.hpp \
+    Cryptor.h \
+    Database.h
 
 FORMS += \
         MainWindow.ui \
     ResourcesListWidget.ui \
     ResourceWidget.ui
+
+INCLUDEPATH += ../3rd-party/TinyAES
 
 CONFIG += precompile_header
 PRECOMPILED_HEADER = stdafx.h
