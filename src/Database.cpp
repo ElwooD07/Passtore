@@ -1,0 +1,136 @@
+#include "stdafx.h"
+#include "Database.h"
+
+namespace
+{
+    const std::string s_phraseDecryptedExpected = PRODUCT_NAME + std::to_string(VER_MAJOR);
+    QByteArray GenerateRandomSequence()
+    {
+        size_t sequenceLen = 128;
+        QByteArray result;
+        qsrand(QDateTime::currentDateTimeUtc().toTime_t());
+        while (sequenceLen--)
+        {
+            result.append(static_cast<char>(qrand() % 255));
+        }
+        return result;
+    }
+}
+
+Database::Database()
+    : m_db(QSqlDatabase::addDatabase("QSQLITE"))
+{ }
+
+void Database::Open(const QString& path, const QString& password)
+{
+    CreateNewConnection(path, password);
+    // TODO : Collect data from DB
+}
+
+void Database::ChangePassword(const QString& newPassword)
+{
+    if (!m_db.transaction())
+    {
+        throw std::runtime_error(QObject::tr("Unable to begin transaction: %1").arg(m_db.lastError().text()).toStdString());
+    }
+
+    QByteArray passwordHash = QCryptographicHash::hash(newPassword.toUtf8(), QCryptographicHash::Sha256);
+    Cryptor passwordCryptor(passwordHash);
+
+    QByteArray originalKeyAndIv = m_cryptor.Key() + m_cryptor.Iv();
+    QByteArray newPhrase = passwordCryptor.Encrypt(QString(s_phraseDecryptedExpected.c_str()).toUtf8());
+    QByteArray newKeys = passwordCryptor.Encrypt(originalKeyAndIv);
+
+    // Delete old Metadata table and create new one
+    QSqlQuery query;
+    if (!query.exec("DROP TABLE IF EXISTS Metadata;") ||
+        !query.exec("CREATE TABLE Metadata ('phrase' BLOB, 'keys' BLOB);"))
+    {
+        throw std::runtime_error(QObject::tr("Unable to reset Metadata table: %1").arg(query.lastError().text()).toStdString());
+    }
+
+    query.prepare("INSERT INTO Metadata ('phrase', 'keys') VALUES (?, ?);");
+    query.addBindValue(newPhrase);
+    query.addBindValue(newKeys);
+    if (!query.exec())
+    {
+        throw std::runtime_error(QObject::tr("Unable to shange password: %1").arg(query.lastError().text()).toStdString());
+    }
+
+    if (!m_db.commit())
+    {
+        throw std::runtime_error(QObject::tr("Unable to commit changes to the database").toStdString());
+    }
+}
+
+void Database::CreateNewConnection(const QString& path, const QString& password)
+{
+    if (m_db.isOpen())
+    {
+        m_db.close();
+    }
+
+    m_db.setDatabaseName(path);
+    if (!m_db.open())
+    {
+        throw std::runtime_error(QObject::tr("Unable to open database: %1").arg(m_db.lastError().text()).toStdString());
+    }
+
+    QSqlQuery query;
+    if (query.exec("SELECT count(*), phrase, keys FROM Metadata LIMIT 1;") &&
+        query.first())
+    {
+        // Existing proper database is opened
+
+        if (query.value(0).toInt() != 1)
+        {
+            throw std::runtime_error(QObject::tr("The database has wrong scheme or corrupted").toStdString());
+        }
+        QByteArray phrase = query.value(1).toByteArray();
+        QByteArray encryptedKey = query.value(2).toByteArray();
+
+        Cryptor passwordCryptor(QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha256));
+        std::string phraseDecrypted = passwordCryptor.DecryptAsString(phrase).toUtf8().constData();
+        if (phraseDecrypted != s_phraseDecryptedExpected)
+        {
+            throw std::runtime_error("Invalid password");
+        }
+        m_cryptor.SetKeys(passwordCryptor.Decrypt(encryptedKey));
+    }
+    else
+    {
+        // New database is created or not valid database is opened
+
+        if (!query.exec("SELECT count(*) FROM sqlite_master WHERE type='table';") ||
+            !query.first())
+        {
+            throw std::runtime_error(QObject::tr("Wrong database is opened: %1").arg(query.lastError().text()).toStdString());
+        }
+
+        bool ok = false;
+        int existingTables = query.value(0).toInt(&ok);
+        if (!ok || existingTables > 0)
+        {
+            throw std::runtime_error(QObject::tr("Wrong database is opened").toStdString());
+        }
+
+        // It is really empty database, so create tables
+        QByteArray keyAndIv = QCryptographicHash::hash(GenerateRandomSequence(), QCryptographicHash::Sha256);
+        m_cryptor.SetKeys(keyAndIv);
+
+        ChangePassword(password);
+
+        if (!query.exec("CREATE TABLE 'Resources' ( \
+            'Id' INTEGER PRIMARY KEY, \
+            'Resource' BLOB, \
+            'Description' BLOB, \
+            'Email' BLOB, \
+            'Username' BLOB, \
+            'Password' BLOB, \
+            'Additional' BLOB);")
+            )
+        {
+            throw std::runtime_error(QObject::tr("Unable to create database structure: %1").arg(query.lastError().text()).toStdString());
+        }
+    }
+}
