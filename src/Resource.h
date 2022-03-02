@@ -5,9 +5,9 @@
 enum ResourceProperty
 {
     ResourcePropertyUnknown = -1,
-    ResourcePropertyResource = 0,
-    ResourcePropertyPassword,
+    ResourcePropertyName = 0,
     ResourcePropertyEmail,
+    ResourcePropertyPassword,
     ResourcePropertyUsername,
     ResourcePropertyDescription,
     ResourcePropertyAdditional,

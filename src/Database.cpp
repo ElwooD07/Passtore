@@ -9,10 +9,10 @@ namespace
     {
         size_t sequenceLen = 128;
         QByteArray result;
-        qsrand(QDateTime::currentDateTimeUtc().toTime_t());
+        srand(QDateTime::currentDateTimeUtc().toSecsSinceEpoch());
         while (sequenceLen--)
         {
-            result.append(static_cast<char>(qrand() % 255));
+            result.append(static_cast<char>(rand() % 255));
         }
         return result;
     }
@@ -38,17 +38,17 @@ void Database::Open(const QString& path, const QString& password)
 
 void Database::ChangePassword(const QString& newPassword)
 {
-    if (!m_db.transaction())
-    {
-        throw std::runtime_error(QObject::tr("Unable to begin transaction: %1").arg(m_db.lastError().text()).toStdString());
-    }
-
     QByteArray passwordHash = QCryptographicHash::hash(newPassword.toUtf8(), QCryptographicHash::Sha256);
     Cryptor passwordCryptor(passwordHash);
 
     QByteArray originalKeyAndIv = m_cryptor.Key() + m_cryptor.Iv();
     QByteArray newPhrase = passwordCryptor.Encrypt(QString(s_phraseDecryptedExpected.c_str()).toUtf8());
     QByteArray newKeys = passwordCryptor.Encrypt(originalKeyAndIv);
+
+    if (!m_db.transaction())
+    {
+        throw std::runtime_error(QObject::tr("Unable to begin transaction: %1").arg(m_db.lastError().text()).toStdString());
+    }
 
     // Delete old Metadata table and create new one
     QSqlQuery query;
@@ -99,7 +99,7 @@ Resource Database::GetResource(int id)
     }
 
     Resource result;
-    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
     {
         result.SetValue(static_cast<ResourceProperty>(i), m_cryptor.DecryptAsString(query.value(i).toByteArray()));
     }
@@ -120,7 +120,7 @@ void Database::SetResource(int id, const Resource& resource)
 {
     QSqlQuery query;
     query.prepare(MakeResourceUpdateQuery(id));
-    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
     {
         query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
     }
@@ -131,11 +131,22 @@ void Database::SetResource(int id, const Resource& resource)
     }
 }
 
+void Database::SetResourcePropertyValue(int id, ResourceProperty prop, const QString& value)
+{
+    QSqlQuery query;
+    query.prepare(MakeResourcePropertyUpdateQuery(id, prop));
+    query.addBindValue(m_cryptor.Encrypt(value));
+    if (!query.exec())
+    {
+        throw std::runtime_error(QObject::tr("Unable to write resource property to the database: %1").arg(query.lastError().text()).toStdString());
+    }
+}
+
 int Database::AddResource(const Resource& resource)
 {
     QSqlQuery query;
     query.prepare(MakeResourceInsertQuery());
-    for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
     {
         query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
     }

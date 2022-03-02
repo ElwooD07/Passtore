@@ -8,7 +8,7 @@ const QString& MakeResourcesTableCreateQuery()
     if (s_query.isEmpty())
     {
         s_query = "CREATE TABLE 'Resources' (";
-        for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "' BLOB,";
         }
@@ -25,7 +25,7 @@ QString MakeResourceSelectQuery(int rowId)
     if (s_query.isEmpty())
     {
         s_query = "SELECT ";
-        for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
         {
             s_query += Resource::PropertyName(static_cast<ResourceProperty>(i)) + ", ";
         }
@@ -49,7 +49,7 @@ QString MakeResourceUpdateQuery(int rowId)
     if (s_query.isEmpty())
     {
         s_query = "UPDATE 'Resources' SET ";
-        for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "'=?, ";
         }
@@ -61,13 +61,21 @@ QString MakeResourceUpdateQuery(int rowId)
     return newQuery.arg(rowId);
 }
 
+QString MakeResourcePropertyUpdateQuery(int rowId, ResourceProperty property)
+{
+    QString query("UPDATE 'Resources' SET '");
+    query += Resource::PropertyName(property);
+    query += "'=? WHERE ROWID=%1";
+    return query.arg(rowId);
+}
+
 const QString& MakeResourceSelectDefinitionsQuery()
 {
     static QString s_query;
     if (s_query.isEmpty())
     {
         s_query = "SELECT ROWID, ";
-        s_query += Resource::PropertyName(ResourcePropertyResource);
+        s_query += Resource::PropertyName(ResourcePropertyName);
         s_query += " FROM Resources;";
     }
     return s_query;
@@ -79,7 +87,7 @@ QString MakeResourceInsertQuery()
     if (s_query.isEmpty())
     {
         s_query = "INSERT INTO Resources (";
-        for (int i = ResourcePropertyResource; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "', ";
         }

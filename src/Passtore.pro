@@ -31,11 +31,11 @@ SOURCES += \
     Widgets/ResourceWidget.cpp \
     Resource.cpp \
     stdafx.cpp \
-    ../3rd-party/TinyAES/aes.c \
     Cryptor.cpp \
     Database.cpp \
     ResourcesModel.cpp \
-    DatabaseQueries.cpp
+    DatabaseQueries.cpp \
+    ResourceViewDelegate.cpp
 
 HEADERS += \
         Widgets/MainWindow.h \
@@ -47,15 +47,18 @@ HEADERS += \
     Cryptor.h \
     Database.h \
     ResourcesModel.h \
-    DatabaseQueries.h
+    DatabaseQueries.h \
+    ResourceViewDelegate.h
 
 UI_DIR = Ui
 FORMS += \
         Ui/MainWindow.ui \
     Ui/ResourcesListWidget.ui \
-    Ui/ResourceWidget.ui
+    Ui/ResourceWidget.ui \
+    Ui/VisibilitySettingsDialog.ui
 
 INCLUDEPATH += ../3rd-party/TinyAES
+INCLUDEPATH += ../3rd-party\gtest\googletest\include
 
 CONFIG += precompile_header
 PRECOMPILED_HEADER = stdafx.h

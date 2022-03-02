@@ -23,7 +23,9 @@ public:
     ResourceDefinitions GetResourceDefinitions();
     Resource GetResource(int id);
     QString GetResourcePropertyValue(int id, ResourceProperty prop);
+
     void SetResource(int id, const Resource& resource);
+    void SetResourcePropertyValue(int id, ResourceProperty prop, const QString& value);
     int AddResource(const Resource& resource); // Returns RowId of created record
 
 private:
