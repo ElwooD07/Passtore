@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "DatabaseQueries.h"
 #include "Resource.h"
 
@@ -8,7 +8,7 @@ const QString& MakeResourcesTableCreateQuery()
     if (s_query.isEmpty())
     {
         s_query = "CREATE TABLE 'Resources' (";
-        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "' BLOB,";
         }
@@ -25,7 +25,7 @@ QString MakeResourceSelectQuery(int rowId)
     if (s_query.isEmpty())
     {
         s_query = "SELECT ";
-        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
         {
             s_query += Resource::PropertyName(static_cast<ResourceProperty>(i)) + ", ";
         }
@@ -49,7 +49,7 @@ QString MakeResourceUpdateQuery(int rowId)
     if (s_query.isEmpty())
     {
         s_query = "UPDATE 'Resources' SET ";
-        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "'=?, ";
         }
@@ -86,13 +86,23 @@ QString MakeResourceInsertQuery()
     QString s_query;
     if (s_query.isEmpty())
     {
+        s_query = "INSERT INTO Resources DEFAULT VALUES;";
+    }
+    return s_query;
+}
+
+QString MakeResourceInsertQueryValues()
+{
+    QString s_query;
+    if (s_query.isEmpty())
+    {
         s_query = "INSERT INTO Resources (";
-        for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+        for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
         {
             s_query += "'" + Resource::PropertyName(static_cast<ResourceProperty>(i)) + "', ";
         }
         s_query.chop(2);
-        s_query += ") VALUES (" + QString("?, ").repeated(ResourcePropertiesCount);
+        s_query += ") VALUES (" + QString("?, ").repeated(ResourcePropertyCount);
         s_query.chop(2);
         s_query += ");";
     }

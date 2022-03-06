@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     {
         Database db;
         db.Open("test", "000");
+        //db.CreateResource();
 
         MainWindow w(nullptr, db);
         w.show();

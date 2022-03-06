@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "ResourcesModel.h"
 
 ResourcesModel::ResourcesModel(QObject* parent, Database& database)
@@ -14,7 +14,7 @@ int ResourcesModel::rowCount(const QModelIndex& parent) const
 
 int ResourcesModel::columnCount(const QModelIndex&) const
 {
-    return ResourcePropertiesCount;
+    return ResourcePropertyCount;
 }
 
 bool ResourcesModel::hasChildren(const QModelIndex& parent) const
@@ -51,7 +51,7 @@ bool ResourcesModel::setData(const QModelIndex& index, const QVariant& value, in
 {
     try
     {
-        m_db.SetResourcePropertyValue(index.row(), static_cast<ResourceProperty>(index.column()), value.toString());
+        m_db.SetResourcePropertyValue(index.row() + 1, static_cast<ResourceProperty>(index.column()), value.toString());
         return true;
     }
     catch (const std::exception& ex)

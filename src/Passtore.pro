@@ -22,47 +22,51 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-CONFIG += c++14
+CONFIG += c++17
 
 SOURCES += \
-        main.cpp \
-        Widgets/MainWindow.cpp \
+    Settings.cpp \
+    Widgets/ColumnSettingsWidget.cpp \
+    Widgets/SettingsDialog.cpp \
+    main.cpp \
+    Widgets/MainWindow.cpp \
     Widgets/ResourcesListWidget.cpp \
-    Widgets/ResourceWidget.cpp \
     Resource.cpp \
-    stdafx.cpp \
     Cryptor.cpp \
     Database.cpp \
     ResourcesModel.cpp \
     DatabaseQueries.cpp \
-    ResourceViewDelegate.cpp
+    ResourceViewDelegate.cpp \
+    pch.cpp
 
 HEADERS += \
-        Widgets/MainWindow.h \
+    Settings.h \
+    Widgets/ColumnSettingsWidget.h \
+    Widgets/MainWindow.h \
     Widgets/ResourcesListWidget.h \
-    Widgets/ResourceWidget.h \
     Resource.h \
-    stdafx.h \
     ../3rd-party/TinyAES/aes.hpp \
     Cryptor.h \
     Database.h \
     ResourcesModel.h \
     DatabaseQueries.h \
-    ResourceViewDelegate.h
+    ResourceViewDelegate.h \
+    Widgets/SettingsDialog.h \
+    pch.h
 
 UI_DIR = Ui
 FORMS += \
-        Ui/MainWindow.ui \
+    Ui/ColumnSettingsWidget.ui \
+    Ui/MainWindow.ui \
     Ui/ResourcesListWidget.ui \
-    Ui/ResourceWidget.ui \
-    Ui/VisibilitySettingsDialog.ui
+    Ui/SettingsDialog.ui
 
 INCLUDEPATH += ../3rd-party/TinyAES
 INCLUDEPATH += ../3rd-party\gtest\googletest\include
 
 CONFIG += precompile_header
-PRECOMPILED_HEADER = stdafx.h
-PRECOMPILED_SOURCE = stdafx.cpp
+PRECOMPILED_HEADER = pch.h
+PRECOMPILED_SOURCE = pch.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

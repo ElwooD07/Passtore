@@ -5,13 +5,14 @@
 enum ResourceProperty
 {
     ResourcePropertyUnknown = -1,
-    ResourcePropertyName = 0,
+    ResourcePropertyFirst = 0,
+    ResourcePropertyName = ResourcePropertyFirst,
     ResourcePropertyEmail,
     ResourcePropertyPassword,
     ResourcePropertyUsername,
     ResourcePropertyDescription,
     ResourcePropertyAdditional,
-    ResourcePropertiesCount
+    ResourcePropertyCount
 };
 
 class Resource

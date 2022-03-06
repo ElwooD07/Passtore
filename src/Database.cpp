@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Database.h"
 #include "DatabaseQueries.h"
 
@@ -99,7 +99,7 @@ Resource Database::GetResource(int id)
     }
 
     Resource result;
-    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
     {
         result.SetValue(static_cast<ResourceProperty>(i), m_cryptor.DecryptAsString(query.value(i).toByteArray()));
     }
@@ -120,7 +120,7 @@ void Database::SetResource(int id, const Resource& resource)
 {
     QSqlQuery query;
     query.prepare(MakeResourceUpdateQuery(id));
-    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
     {
         query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
     }
@@ -135,18 +135,30 @@ void Database::SetResourcePropertyValue(int id, ResourceProperty prop, const QSt
 {
     QSqlQuery query;
     query.prepare(MakeResourcePropertyUpdateQuery(id, prop));
-    query.addBindValue(m_cryptor.Encrypt(value));
+    query.addBindValue(m_cryptor.Encrypt(value), QSql::In | QSql::Binary);
     if (!query.exec())
     {
         throw std::runtime_error(QObject::tr("Unable to write resource property to the database: %1").arg(query.lastError().text()).toStdString());
     }
 }
 
-int Database::AddResource(const Resource& resource)
+int Database::CreateResource()
 {
     QSqlQuery query;
     query.prepare(MakeResourceInsertQuery());
-    for (int i = ResourcePropertyName; i < ResourcePropertiesCount; ++i)
+
+    if (!query.exec())
+    {
+        throw std::runtime_error(QObject::tr("Unable to write resource to the database: %1").arg(query.lastError().text()).toStdString());
+    }
+    return query.lastInsertId().toInt();
+}
+
+int Database::AddResource(const Resource& resource)
+{
+    QSqlQuery query;
+    query.prepare(MakeResourceInsertQueryValues());
+    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
     {
         query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
     }

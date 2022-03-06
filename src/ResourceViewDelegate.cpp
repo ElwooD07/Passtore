@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "ResourceViewDelegate.h"
 #include "Resource.h"
 
@@ -24,7 +24,6 @@ void ResourceViewDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
     } else {
         static_cast<QLineEdit*>(editor)->setText(data);
     }
-
 }
 
 void ResourceViewDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const

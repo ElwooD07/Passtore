@@ -8,3 +8,4 @@ const QString& MakeResourceSelectDefinitionsQuery();
 QString MakeResourceUpdateQuery(int rowId);
 QString MakeResourcePropertyUpdateQuery(int rowId, ResourceProperty property);
 QString MakeResourceInsertQuery();
+QString MakeResourceInsertQueryValues();

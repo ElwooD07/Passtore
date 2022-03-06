@@ -7,7 +7,7 @@
 struct ResourceDefinition
 {
     int id;
-    QString name; // Corresponds to ResourcePropertyResource
+    QString name; // Corresponds to ResourcePropertyName
 };
 using ResourceDefinitions = QVector<ResourceDefinition>;
 
@@ -26,6 +26,7 @@ public:
 
     void SetResource(int id, const Resource& resource);
     void SetResourcePropertyValue(int id, ResourceProperty prop, const QString& value);
+    int CreateResource(); // Returns RowId of created record
     int AddResource(const Resource& resource); // Returns RowId of created record
 
 private:

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Cryptor.h"
 #include "aes.hpp"
 

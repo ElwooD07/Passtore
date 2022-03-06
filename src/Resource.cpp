@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Resource.h"
 
 namespace
@@ -11,13 +11,13 @@ namespace
         QT_TR_NOOP("Description"),
         QT_TR_NOOP("Additional"),
     };
-    static_assert (sizeof(s_propNames)/ sizeof(const char*) == ResourcePropertiesCount,
+    static_assert (sizeof(s_propNames)/ sizeof(const char*) == ResourcePropertyCount,
                    "Not all names for resource properties are specified");
 }
 
 Resource::Resource(const QString& name)
 {
-    m_values.resize(ResourcePropertiesCount);
+    m_values.resize(ResourcePropertyCount);
     m_values[ResourcePropertyName] = name;
 }
 
