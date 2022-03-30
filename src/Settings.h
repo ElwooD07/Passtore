@@ -1,14 +1,17 @@
 #pragma once
-#include "Resource.h"
+#include <QVector>
 
-struct ColumnSettings
+namespace passtore
 {
-    QString name;
-    bool visible = false;
-    bool blured = false;
-};
+    struct ColumnSettings
+    {
+        QString name;
+        bool visible = false;
+        bool blured = false;
+    };
 
-struct TableSettings
-{
-    QMap<ResourceProperty, ColumnSettings> columns;
-};
+    struct TableSettings
+    {
+        QVector<ColumnSettings> columns;
+    };
+}

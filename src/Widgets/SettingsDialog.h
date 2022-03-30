@@ -1,14 +1,19 @@
 #pragma once
 #include "ui_SettingsDialog.h"
 #include "Settings.h"
+#include "Storages/IStorage.h"
 
-class SettingsDialog : public QDialog
+namespace passtore
 {
-public:
-    SettingsDialog(QWidget* parent);
+    class SettingsDialog : public QDialog
+    {
+    public:
+        SettingsDialog(QWidget* parent, const ResourcesDefinition& defs);
 
-    TableSettings getTableSettings() const;
+        TableSettings getTableSettings() const;
 
-private:
-    Ui::SettingsDialog m_ui;
-};
+    private:
+        Ui::SettingsDialog m_ui;
+        size_t m_columnsCount;
+    };
+}

@@ -1,7 +1,8 @@
+#include "pch.h"
 #include "Widgets/MainWindow.h"
-#include <QApplication>
-#include "Database.h"
-#include <QMessageBox>
+#include "Storages/SQLite/SQLiteDatabase.h" // TODO: load available storages from plugins
+
+using namespace passtore;
 
 int main(int argc, char *argv[])
 {
@@ -9,11 +10,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        Database db;
+        SQLiteDatabase db;
         db.Open("test", "000");
         //db.CreateResource();
 
-        MainWindow w(nullptr, db);
+        MainWindow w(nullptr, &db);
         w.show();
 
         return a.exec();

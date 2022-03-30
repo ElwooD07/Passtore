@@ -25,32 +25,36 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++17
 
 SOURCES += \
+    Models/ResourceTableModel.cpp \
+    Models/ResourceViewDelegate.cpp \
     Settings.cpp \
+    Storages/SQLite/IndexConverter.cpp \
+    Storages/SQLite/SQLiteColumns.cpp \
+    Storages/SQLite/SQLiteDatabase.cpp \
+    Storages/SQLite/SQLiteDatabaseQueries.cpp \
     Widgets/ColumnSettingsWidget.cpp \
     Widgets/SettingsDialog.cpp \
     main.cpp \
     Widgets/MainWindow.cpp \
     Widgets/ResourcesListWidget.cpp \
-    Resource.cpp \
     Cryptor.cpp \
-    Database.cpp \
-    ResourcesModel.cpp \
-    DatabaseQueries.cpp \
-    ResourceViewDelegate.cpp \
     pch.cpp
 
 HEADERS += \
+    Models/ResourceTableModel.h \
+    Models/ResourceTableModelRoles.h \
+    Models/ResourceViewDelegate.h \
     Settings.h \
+    Storages/IStorage.h \
+    Storages/SQLite/IndexConverter.h \
+    Storages/SQLite/SQLiteColumns.h \
+    Storages/SQLite/SQLiteDatabase.h \
+    Storages/SQLite/SQLiteDatabaseQueries.h \
     Widgets/ColumnSettingsWidget.h \
     Widgets/MainWindow.h \
     Widgets/ResourcesListWidget.h \
-    Resource.h \
     ../3rd-party/TinyAES/aes.hpp \
     Cryptor.h \
-    Database.h \
-    ResourcesModel.h \
-    DatabaseQueries.h \
-    ResourceViewDelegate.h \
     Widgets/SettingsDialog.h \
     pch.h
 

@@ -1,30 +1,23 @@
 #include "pch.h"
-#include "Database.h"
-#include "DatabaseQueries.h"
+#include "Storages/SQLite/SQLiteColumns.h"
+#include "Storages/SQLite/SQLiteDatabase.h"
+#include "Storages/SQLite/SQLiteDatabaseQueries.h"
+
+using namespace passtore;
 
 namespace
 {
     const std::string s_phraseDecryptedExpected = PRODUCT_NAME + std::to_string(VER_MAJOR);
-    QByteArray GenerateRandomSequence()
-    {
-        size_t sequenceLen = 128;
-        QByteArray result;
-        srand(QDateTime::currentDateTimeUtc().toSecsSinceEpoch());
-        while (sequenceLen--)
-        {
-            result.append(static_cast<char>(rand() % 255));
-        }
-        return result;
-    }
 }
 
-Database::Database()
+SQLiteDatabase::SQLiteDatabase()
     : m_db(QSqlDatabase::addDatabase("QSQLITE"))
 { }
 
-void Database::Open(const QString& path, const QString& password)
+void SQLiteDatabase::Open(const QString& path, const QString& password)
 {
     CreateNewConnection(path, password);
+
     // Uncomment it for tests when the database is empty
     /*Resource res;
     res.SetValue(ResourcePropertyResource, "ResName");
@@ -36,7 +29,7 @@ void Database::Open(const QString& path, const QString& password)
     // TODO : Collect data from DB
 }
 
-void Database::ChangePassword(const QString& newPassword)
+void SQLiteDatabase::ChangePassword(const QString& newPassword)
 {
     QByteArray passwordHash = QCryptographicHash::hash(newPassword.toUtf8(), QCryptographicHash::Sha256);
     Cryptor passwordCryptor(passwordHash);
@@ -72,57 +65,59 @@ void Database::ChangePassword(const QString& newPassword)
     }
 }
 
-ResourceDefinitions Database::GetResourceDefinitions()
+int SQLiteDatabase::GetResourcesCount()
 {
-    QSqlQuery query;
-    if (!query.exec(MakeResourceSelectDefinitionsQuery()))
-    {
-        throw std::runtime_error(QObject::tr("Unable to get data from the database: %1").arg(query.lastError().text()).toStdString());
-    }
-
-    ResourceDefinitions result;
-    if (query.first())
-    {
-        do {
-            result.push_back( { query.value(0).toInt(), m_cryptor.DecryptAsString(query.value(1).toByteArray()) } );
-        } while(query.next());
-    }
-    return result;
+    return m_idx.Count();
 }
 
-Resource Database::GetResource(int id)
+void SQLiteDatabase::GetResourcesDefinition(ResourcesDefinition& defs)
 {
+    if (m_defs.isEmpty())
+    {
+        for (size_t col = ColumnFirst; col < ColumnCount; ++col)
+        {
+            m_defs.emplace_back(ResourceValueDefinition{ QObject::tr(GetColumnName(static_cast<Column>(col))) });
+        }
+        m_defs[ColumnPassword].critical = true;
+        m_defs[ColumnDescription].big = true;
+        m_defs[ColumnAdditional].big = true;
+    }
+    defs = m_defs;
+}
+
+void SQLiteDatabase::GetResource(int id, Resource& resource)
+{
+    auto rowId = m_idx.ToRowId(id);
+    if (rowId == IndexConverter::InvalidId)
+    {
+        throw std::runtime_error(QObject::tr("Cannot match id %1 with ROWID").arg(id).toStdString());
+    }
+
     QSqlQuery query;
-    if (!query.exec(MakeResourceSelectQuery(id)) || !query.first())
+    if (!query.exec(MakeResourceSelectQuery(rowId)) || !query.first())
     {
         throw std::runtime_error(QObject::tr("Unable to get resource record from the database: %1").arg(query.lastError().text()).toStdString());
     }
 
     Resource result;
-    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
+    for (int i = ColumnName; i < ColumnCount; ++i)
     {
-        result.SetValue(static_cast<ResourceProperty>(i), m_cryptor.DecryptAsString(query.value(i).toByteArray()));
+        resource.data[i] = m_cryptor.DecryptAsString(query.value(i).toByteArray());
     }
-    return result;
 }
 
-QString Database::GetResourcePropertyValue(int id, ResourceProperty prop)
+void SQLiteDatabase::GetResources(int from, int to, QVector<Resource>& resources)
 {
-    QSqlQuery query;
-    if (!query.exec(MakeResourceSelectPropertyQuery(id, prop)) || !query.first())
-    {
-        throw std::runtime_error(QObject::tr("Unable to get resource record from the database: %1").arg(query.lastError().text()).toStdString());
-    }
-    return m_cryptor.DecryptAsString(query.value(0).toByteArray());
+    // TODO
 }
 
-void Database::SetResource(int id, const Resource& resource)
+void SQLiteDatabase::SetResource(int id, const Resource& resource)
 {
     QSqlQuery query;
     query.prepare(MakeResourceUpdateQuery(id));
-    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
+    for (int i = ColumnName; i < ColumnCount; ++i)
     {
-        query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
+        query.addBindValue(m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i))));
     }
 
     if (!query.exec())
@@ -131,36 +126,13 @@ void Database::SetResource(int id, const Resource& resource)
     }
 }
 
-void Database::SetResourcePropertyValue(int id, ResourceProperty prop, const QString& value)
-{
-    QSqlQuery query;
-    query.prepare(MakeResourcePropertyUpdateQuery(id, prop));
-    query.addBindValue(m_cryptor.Encrypt(value), QSql::In | QSql::Binary);
-    if (!query.exec())
-    {
-        throw std::runtime_error(QObject::tr("Unable to write resource property to the database: %1").arg(query.lastError().text()).toStdString());
-    }
-}
-
-int Database::CreateResource()
-{
-    QSqlQuery query;
-    query.prepare(MakeResourceInsertQuery());
-
-    if (!query.exec())
-    {
-        throw std::runtime_error(QObject::tr("Unable to write resource to the database: %1").arg(query.lastError().text()).toStdString());
-    }
-    return query.lastInsertId().toInt();
-}
-
-int Database::AddResource(const Resource& resource)
+int SQLiteDatabase::AddResource(const Resource& resource)
 {
     QSqlQuery query;
     query.prepare(MakeResourceInsertQueryValues());
-    for (int i = ResourcePropertyName; i < ResourcePropertyCount; ++i)
+    for (int i = ColumnName; i < ColumnCount; ++i)
     {
-        query.addBindValue(m_cryptor.Encrypt(resource.Value(static_cast<ResourceProperty>(i))));
+        query.addBindValue(m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i))));
     }
 
     if (!query.exec())
@@ -170,7 +142,12 @@ int Database::AddResource(const Resource& resource)
     return query.lastInsertId().toInt();
 }
 
-void Database::CreateNewConnection(const QString& path, const QString& password)
+void SQLiteDatabase::SwapResources(int first, int second)
+{
+    // TODO
+}
+
+void SQLiteDatabase::CreateNewConnection(const QString& path, const QString& password)
 {
     if (m_db.isOpen())
     {
@@ -222,7 +199,8 @@ void Database::CreateNewConnection(const QString& path, const QString& password)
         }
 
         // It is really empty database, so create tables
-        QByteArray keyAndIv = QCryptographicHash::hash(GenerateRandomSequence(), QCryptographicHash::Sha256);
+        auto randomCryptorData = GenerateRandomSequence(m_cryptor.GetKeySize() * 2);
+        QByteArray keyAndIv = QCryptographicHash::hash(randomCryptorData, QCryptographicHash::Sha256);
         m_cryptor.SetKeys(keyAndIv);
 
         ChangePassword(password);

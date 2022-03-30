@@ -2,6 +2,8 @@
 #include "Cryptor.h"
 #include "aes.hpp"
 
+using namespace passtore;
+
 Cryptor::Cryptor()
 { }
 
@@ -12,7 +14,7 @@ Cryptor::Cryptor(const QByteArray& keyAndIv)
 
 void Cryptor::SetKeys(const QByteArray& key, const QByteArray& iv)
 {
-    CheckKeys(key, iv);
+    CheckData(key, iv);
     m_key = key;
     m_iv = iv;
 }
@@ -24,41 +26,46 @@ void Cryptor::SetKeys(const QByteArray& keyAndIv)
 
 QByteArray Cryptor::Encrypt(const QString& text)
 {
-    CheckKeys();
+    CheckData();
     return text.toUtf8();
 }
 
 QByteArray Cryptor::Encrypt(const QByteArray& data)
 {
-    CheckKeys();
+    CheckData();
     return data;
 }
 
 QByteArray Cryptor::Decrypt(const QByteArray& data)
 {
-    CheckKeys();
+    CheckData();
     return data;
 }
 
 QString Cryptor::DecryptAsString(const QByteArray& data)
 {
-    CheckKeys();
+    CheckData();
     return QString::fromUtf8(data.toStdString().c_str());
 }
 
 const QByteArray& Cryptor::Key() const
 {
-    CheckKeys();
+    CheckData();
     return m_key;
 }
 
 const QByteArray& Cryptor::Iv() const
 {
-    CheckKeys();
+    CheckData();
     return m_iv;
 }
 
-void Cryptor::CheckKeys(const QByteArray& key, const QByteArray& iv) const
+constexpr size_t Cryptor::GetKeySize()
+{
+    return AES_KEYLEN;
+}
+
+void Cryptor::CheckData(const QByteArray& key, const QByteArray& iv) const
 {
     if (key.size() != AES_BLOCKLEN || iv.size() != AES_BLOCKLEN)
     {
@@ -66,7 +73,18 @@ void Cryptor::CheckKeys(const QByteArray& key, const QByteArray& iv) const
     }
 }
 
-void Cryptor::CheckKeys() const
+void Cryptor::CheckData() const
 {
-    CheckKeys(m_key, m_iv);
+    CheckData(m_key, m_iv);
+}
+
+QByteArray GenerateRandomSequence(size_t sequenceLen)
+{
+    QByteArray result;
+    srand(QDateTime::currentDateTimeUtc().toSecsSinceEpoch());
+    while (sequenceLen--)
+    {
+        result.append(static_cast<char>(rand() % 255));
+    }
+    return result;
 }

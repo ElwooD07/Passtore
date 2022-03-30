@@ -1,16 +1,18 @@
 #include "pch.h"
-#include "ResourceViewDelegate.h"
-#include "Resource.h"
+#include "Models/ResourceViewDelegate.h"
+#include "Models/ResourceTableModelRoles.h"
 
-ResourceViewDelegate::ResourceViewDelegate(QObject* parent)
+using namespace passtore;
+
+ResourceViewDelegate::ResourceViewDelegate(QObject* parent, const ResourcesDefinition& defs)
     : QStyledItemDelegate(parent)
-{
-
-}
+    , m_defs(defs)
+{ }
 
 QWidget* ResourceViewDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    if (index.column() == ResourcePropertyAdditional || index.column() == ResourcePropertyDescription) {
+    if (index.data(ResourceTableModelRole::IsBigColumn).toBool())
+    {
         return new QTextEdit(parent);
     }
     return new QLineEdit(parent);
@@ -19,9 +21,12 @@ QWidget* ResourceViewDelegate::createEditor(QWidget* parent, const QStyleOptionV
 void ResourceViewDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
     auto data = index.data(Qt::DisplayRole).toString();
-    if (index.column() == ResourcePropertyAdditional || index.column() == ResourcePropertyDescription) {
+    if (index.data(ResourceTableModelRole::IsBigColumn).toBool())
+    {
         static_cast<QTextEdit*>(editor)->setText(data);
-    } else {
+    }
+    else
+    {
         static_cast<QLineEdit*>(editor)->setText(data);
     }
 }
@@ -29,9 +34,12 @@ void ResourceViewDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 void ResourceViewDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     QString data;
-    if (index.column() == ResourcePropertyAdditional || index.column() == ResourcePropertyDescription) {
+    if (index.data(ResourceTableModelRole::IsBigColumn).toBool())
+    {
         data = static_cast<QTextEdit*>(editor)->toPlainText();
-    } else {
+    }
+    else
+    {
         data = static_cast<QLineEdit*>(editor)->text();
     }
     model->setData(index, data);

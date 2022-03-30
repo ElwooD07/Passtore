@@ -1,6 +1,8 @@
 #include <pch.h>
 #include "ColumnSettingsWidget.h"
 
+using namespace passtore;
+
 ColumnSettingsWidget::ColumnSettingsWidget(QWidget* parent, ColumnSettings sets)
     : QWidget(parent)
 {

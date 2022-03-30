@@ -1,19 +1,22 @@
 #pragma once
 #include <QMainWindow>
 #include "ui_MainWindow.h"
-#include "Database.h"
+#include "Storages/IStorage.h"
 
 namespace Ui {
     class MainWindow;
 }
 
-class MainWindow : public QMainWindow
+namespace passtore
 {
-    Q_OBJECT
+    class MainWindow : public QMainWindow
+    {
+        Q_OBJECT
 
-public:
-    explicit MainWindow(QWidget* parent, Database& database);
+    public:
+        explicit MainWindow(QWidget* parent, IStorage* database);
 
-private:
-    Ui::MainWindow m_ui;
-};
+    private:
+        Ui::MainWindow m_ui;
+    };
+}

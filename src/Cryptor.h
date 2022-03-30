@@ -1,28 +1,35 @@
 #pragma once
 #include <QByteArray>
 
-class Cryptor
+namespace passtore
 {
-public:
-    Cryptor();
-    explicit Cryptor(const QByteArray& keyAndIv);
+    class Cryptor
+    {
+    public:
+        Cryptor();
+        explicit Cryptor(const QByteArray& keyAndIv);
 
-    void SetKeys(const QByteArray& key, const QByteArray& iv);
-    void SetKeys(const QByteArray& keyAndIv);
+        void SetKeys(const QByteArray& key, const QByteArray& iv);
+        void SetKeys(const QByteArray& keyAndIv);
 
-    QByteArray Encrypt(const QString& text);
-    QByteArray Encrypt(const QByteArray& data);
-    QByteArray Decrypt(const QByteArray& data);
-    QString DecryptAsString(const QByteArray& data);
+        QByteArray Encrypt(const QString& text);
+        QByteArray Encrypt(const QByteArray& data);
+        QByteArray Decrypt(const QByteArray& data);
+        QString DecryptAsString(const QByteArray& data);
 
-    const QByteArray& Key() const;
-    const QByteArray& Iv() const;
+        const QByteArray& Key() const;
+        const QByteArray& Iv() const;
 
-private:
-    void CheckKeys(const QByteArray& key, const QByteArray& iv) const;
-    void CheckKeys() const;
+        static constexpr size_t GetKeySize();
 
-private:
-    QByteArray m_key;
-    QByteArray m_iv;
-};
+    private:
+        void CheckData(const QByteArray& key, const QByteArray& iv) const;
+        void CheckData() const;
+
+    private:
+        QByteArray m_key;
+        QByteArray m_iv;
+    };
+
+    QByteArray GenerateRandomSequence(size_t sequenceLen);
+}

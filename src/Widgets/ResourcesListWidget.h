@@ -1,14 +1,15 @@
 #pragma once
 #include "ui_ResourcesListWidget.h"
-#include "ResourcesModel.h"
 
-class ResourcesListWidget : public QWidget
+namespace passtore
 {
-    Q_OBJECT
-public:
-    explicit ResourcesListWidget(QWidget* parent, ResourcesModel* model);
+    class ResourcesListWidget : public QWidget
+    {
+        Q_OBJECT
+    public:
+        explicit ResourcesListWidget(QWidget* parent, QAbstractTableModel* model, QStyledItemDelegate* delegate);
 
-private:
-    Ui::ResourceListWidget m_ui;
-};
-
+    private:
+        Ui::ResourceListWidget m_ui;
+    };
+}

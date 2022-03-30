@@ -2,14 +2,17 @@
 #include "ui_ColumnSettingsWidget.h"
 #include "Settings.h"
 
-class ColumnSettingsWidget : public QWidget
+namespace passtore
 {
-    Q_OBJECT
-public:
-    explicit ColumnSettingsWidget(QWidget *parent, ColumnSettings sets);
+    class ColumnSettingsWidget : public QWidget
+    {
+        Q_OBJECT
+    public:
+        explicit ColumnSettingsWidget(QWidget *parent, ColumnSettings sets);
 
-    ColumnSettings getSets() const;
+        ColumnSettings getSets() const;
 
-private:
-    Ui::ColumnSettingsWidget m_ui;
-};
+    private:
+        Ui::ColumnSettingsWidget m_ui;
+    };
+}

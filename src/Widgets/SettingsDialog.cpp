@@ -1,17 +1,16 @@
 #include "pch.h"
 #include "SettingsDialog.h"
-#include "Resource.h"
 #include "ColumnSettingsWidget.h"
 
-SettingsDialog::SettingsDialog(QWidget *parent)
+passtore::SettingsDialog::SettingsDialog(QWidget *parent, const ResourcesDefinition& defs)
     : QDialog(parent)
 {
     m_ui.setupUi(this);
 
-    for (size_t i = ResourcePropertyFirst; i < ResourcePropertyCount; ++i)
+    for (int i = 0; i < defs.size(); ++i)
     {
         auto columnSets = ColumnSettings {
-                Resource::PropertyNameTranslated(static_cast<ResourceProperty>(i)),
+                defs.at(i).name,
                 true,
                 false
         };
@@ -21,15 +20,17 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     }
 
     m_ui.layoutTable->addItem(new QSpacerItem(1, 1, QSizePolicy::Ignored, QSizePolicy::Expanding));
+
+    m_columnsCount = defs.size();
 }
 
-TableSettings SettingsDialog::getTableSettings() const
+passtore::TableSettings passtore::SettingsDialog::getTableSettings() const
 {
     TableSettings sets;
-    for (size_t i = ResourcePropertyFirst; i < ResourcePropertyCount; ++i)
+    for (int i = 0; i < m_columnsCount; ++i)
     {
         const auto columnSetsWidget = static_cast<ColumnSettingsWidget*>(m_ui.layoutTable->itemAt(i)->widget());
-        sets.columns.insert(static_cast<ResourceProperty>(i), columnSetsWidget->getSets());
+        sets.columns.push_back(columnSetsWidget->getSets());
     }
 
     return sets;
