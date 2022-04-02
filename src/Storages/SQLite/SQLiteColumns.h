@@ -16,4 +16,5 @@ namespace passtore
     };
 
     const char* GetColumnName(Column col);
+    const QString& GetColumnPlaceholder(passtore::Column col);
 }

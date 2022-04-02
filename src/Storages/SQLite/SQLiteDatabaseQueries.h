@@ -6,6 +6,7 @@ namespace passtore
     const QString& MakeResourcesTableCreateQuery();
     const QString& MakeResourcesCountQuery();
     QString MakeResourceSelectQuery(int rowId);
+    QString MakeResourcesSelectQuery(int fromRowId, int toRowId);
     QString MakeResourceSelectPropertyQuery(int rowId, Column col);
     QString MakeResourceUpdateQuery(int rowId);
     QString MakeResourcePropertyUpdateQuery(int rowId, Column col);

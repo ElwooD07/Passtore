@@ -1,8 +1,8 @@
 #pragma once
 #include <QSortFilterProxyModel>
-#include <QCache>
 #include "Storages/IStorage.h"
 #include "Settings.h"
+#include "Cache.h"
 
 namespace passtore
 {
@@ -29,8 +29,9 @@ namespace passtore
         void ErrorOccurred(QString text) const;
 
     private:
-        Resource *GetResource(int id) const;
-        bool SetResource(int id, Resource* resource);
+        // The returned Resource is editable, it can be explicitly saved to the storage by caller.
+        // Returns nullptr if Resource with given id is not found.
+        Resource* GetResource(int id) const;
         bool IndexIsValid(const QModelIndex& idx) const;
 
     private:
@@ -38,6 +39,6 @@ namespace passtore
         ResourcesDefinition m_resourcesDefs;
         QVector<bool> m_columnsVisibility;
         TableSettings m_sets;
-        mutable QCache<int, Resource> m_cache;
+        mutable Cache<int, Resource> m_cache;
     };
 }

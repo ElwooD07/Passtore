@@ -16,6 +16,9 @@ namespace passtore
     public:
         explicit MainWindow(QWidget* parent, IStorage* database);
 
+    public slots:
+        void OnErrorOccurred(const QString& message);
+
     private:
         Ui::MainWindow m_ui;
     };

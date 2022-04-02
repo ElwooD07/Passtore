@@ -2,70 +2,68 @@
 #include "Cryptor.h"
 #include "aes.hpp"
 
-using namespace passtore;
-
-Cryptor::Cryptor()
+passtore::Cryptor::Cryptor()
 { }
 
-Cryptor::Cryptor(const QByteArray& keyAndIv)
+passtore::Cryptor::Cryptor(const QByteArray& keyAndIv)
 {
     SetKeys(keyAndIv);
 }
 
-void Cryptor::SetKeys(const QByteArray& key, const QByteArray& iv)
+void passtore::Cryptor::SetKeys(const QByteArray& key, const QByteArray& iv)
 {
     CheckData(key, iv);
     m_key = key;
     m_iv = iv;
 }
 
-void Cryptor::SetKeys(const QByteArray& keyAndIv)
+void passtore::Cryptor::SetKeys(const QByteArray& keyAndIv)
 {
     SetKeys(keyAndIv.left(keyAndIv.size() / 2), keyAndIv.right(keyAndIv.size() / 2));
 }
 
-QByteArray Cryptor::Encrypt(const QString& text)
+QByteArray passtore::Cryptor::Encrypt(const QString& text)
 {
     CheckData();
     return text.toUtf8();
 }
 
-QByteArray Cryptor::Encrypt(const QByteArray& data)
+QByteArray passtore::Cryptor::Encrypt(const QByteArray& data)
 {
     CheckData();
     return data;
 }
 
-QByteArray Cryptor::Decrypt(const QByteArray& data)
+QByteArray passtore::Cryptor::Decrypt(const QByteArray& data)
 {
     CheckData();
     return data;
 }
 
-QString Cryptor::DecryptAsString(const QByteArray& data)
+QString passtore::Cryptor::DecryptAsString(const QByteArray& data)
 {
     CheckData();
     return QString::fromUtf8(data.toStdString().c_str());
 }
 
-const QByteArray& Cryptor::Key() const
+const QByteArray& passtore::Cryptor::Key() const
 {
     CheckData();
     return m_key;
 }
 
-const QByteArray& Cryptor::Iv() const
+const QByteArray& passtore::Cryptor::Iv() const
 {
     CheckData();
     return m_iv;
 }
 
-constexpr size_t Cryptor::GetKeySize()
+size_t passtore::Cryptor::GetKeySize()
 {
     return AES_KEYLEN;
 }
 
-void Cryptor::CheckData(const QByteArray& key, const QByteArray& iv) const
+void passtore::Cryptor::CheckData(const QByteArray& key, const QByteArray& iv) const
 {
     if (key.size() != AES_BLOCKLEN || iv.size() != AES_BLOCKLEN)
     {
@@ -73,12 +71,12 @@ void Cryptor::CheckData(const QByteArray& key, const QByteArray& iv) const
     }
 }
 
-void Cryptor::CheckData() const
+void passtore::Cryptor::CheckData() const
 {
     CheckData(m_key, m_iv);
 }
 
-QByteArray GenerateRandomSequence(size_t sequenceLen)
+QByteArray passtore::GenerateRandomSequence(size_t sequenceLen)
 {
     QByteArray result;
     srand(QDateTime::currentDateTimeUtc().toSecsSinceEpoch());

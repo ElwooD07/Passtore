@@ -1,21 +1,25 @@
 #include "pch.h"
 #include "ResourceTableModel.h"
+#include "ResourceTableModelRoles.h"
 
 using namespace passtore;
 
 ResourceTableModel::ResourceTableModel(QObject* parent, IStorage* storage)
     : QAbstractTableModel(parent)
     , m_storage(storage)
-{ }
+    , m_cache(1000)
+{
+    storage->GetResourcesDefinition(m_resourcesDefs);
+}
 
 int ResourceTableModel::rowCount(const QModelIndex&) const
 {
-    return m_resourcesDefs.size();
+    return m_storage->GetResourcesCount();
 }
 
 int ResourceTableModel::columnCount(const QModelIndex&) const
 {
-    return m_storage->GetResourcesCount();
+    return m_resourcesDefs.size();
 }
 
 bool ResourceTableModel::hasChildren(const QModelIndex& parent) const
@@ -32,13 +36,19 @@ QVariant ResourceTableModel::data(const QModelIndex& index, int role) const
 
     try
     {
-        if (role == Qt::DisplayRole)
+        switch (role)
+        {
+        case Qt::DisplayRole:
         {
             auto resource = GetResource(index.row());
             if (resource != nullptr)
             {
                 return resource->data.at(index.column());
             }
+            break;
+        }
+        case ResourceTableModelRole::IsBigColumn:
+            return m_resourcesDefs.at(index.column()).big;
         }
     }
     catch(const std::exception& ex)
@@ -50,7 +60,7 @@ QVariant ResourceTableModel::data(const QModelIndex& index, int role) const
 
 bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-    if (!IndexIsValid(index) || role != Qt::DisplayRole)
+    if (!IndexIsValid(index) || role != Qt::EditRole)
     {
         return {};
     }
@@ -64,7 +74,7 @@ bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value
         }
 
         resource->data[index.column()] = value.toString();
-        return SetResource(index.row(), resource);
+        m_storage->SetResource(index.row(), *resource);
     }
     catch (const std::exception& ex)
     {
@@ -87,11 +97,11 @@ QVariant ResourceTableModel::headerData(int section, Qt::Orientation orientation
     return { };
 }
 
-Resource* ResourceTableModel::GetResource(int id) const
+passtore::Resource* ResourceTableModel::GetResource(int id) const
 {
     try
     {
-        auto cachedResource = m_cache.take(id);
+        auto cachedResource = m_cache.Get(id);
         if (cachedResource != nullptr)
         {
             return cachedResource;
@@ -99,49 +109,13 @@ Resource* ResourceTableModel::GetResource(int id) const
 
         Resource newResource;
         m_storage->GetResource(id, newResource);
-
-        // Move resource to the heap to make it cacheable
-        auto newResourceInHeap = new Resource(std::move(newResource));
-        auto inserted = m_cache.insert(id, newResourceInHeap);
-        if (!inserted)
-        {
-            // Delete the resource because it will leak
-            delete newResourceInHeap;
-            newResourceInHeap = nullptr;
-            emit ErrorOccurred(tr("Failed to cache resource %1").arg(id));
-        }
-
-        return newResourceInHeap;
+        return &m_cache.Set(id, newResource);
     }
     catch(const std::exception& ex)
     {
         emit ErrorOccurred(tr("Failed to get resource %1: '%2'").arg(id).arg(ex.what()));
     }
-}
-
-bool ResourceTableModel::SetResource(int id, Resource* resource)
-{
-    try
-    {
-        auto inserted = m_cache.insert(id, resource);
-        if (inserted)
-        {
-            m_storage->SetResource(id, *resource);
-        }
-        else
-        {
-            // Do not delete the resource because it is already owned by cache
-            emit ErrorOccurred(tr("Failed to cache resource %1").arg(id));
-        }
-
-        return inserted;
-    }
-    catch(const std::exception& ex)
-    {
-        emit ErrorOccurred(tr("Failed to save resource %1: '%2'").arg(id).arg(ex.what()));
-    }
-
-    return false;
+    return nullptr;
 }
 
 bool ResourceTableModel::IndexIsValid(const QModelIndex& index) const

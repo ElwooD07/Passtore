@@ -41,6 +41,7 @@ SOURCES += \
     pch.cpp
 
 HEADERS += \
+    Models/Cache.h \
     Models/ResourceTableModel.h \
     Models/ResourceTableModelRoles.h \
     Models/ResourceViewDelegate.h \

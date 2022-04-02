@@ -9,20 +9,28 @@ namespace passtore
         bool big = false; // indicates that this value may need big area to display and edit
     };
 
-    using ResourcesDefinition = QVector<ResourceValueDefinition>; // vector of column names
+    // indexes are column numbers started from 0
+    using ResourcesDefinition = QVector<ResourceValueDefinition>;
 
     struct Resource
     {
         QVector<QString> data; // change to std::vector or something more common for plugin support
-        void operator delete(void* ptr)
+
+        ~Resource()
         {
-            auto resource = static_cast<Resource*>(ptr);
-            for (auto it = resource->data.begin(); it != resource->data.end(); ++it)
+            // all the data considered as sensitive
+            for (auto it = data.begin(); it != data.end(); ++it)
             {
                 // Erase data to not keep sensitive data in memory
                 memset(it->data(), 0, it->size());
             }
         }
+
+        Resource() = default;
+        Resource(const Resource&) = default;
+        Resource& operator=(Resource&&) = default;
+        Resource& operator=(const Resource&) = default;
+        Resource(Resource&&) noexcept = default;
     };
 
     class IStorage
@@ -39,7 +47,7 @@ namespace passtore
         virtual void GetResource(int id, Resource& resource) = 0;
         virtual void GetResources(int from, int to, QVector<Resource>& resources) = 0;
         virtual void SetResource(int id, const Resource& resource) = 0;
-        virtual int AddResource(const Resource& resource); // Returns Id of created record
+        virtual int AddResource(const Resource& resource) = 0; // Returns Id of created record
         virtual void SwapResources(int first, int second) = 0;
     };
 }

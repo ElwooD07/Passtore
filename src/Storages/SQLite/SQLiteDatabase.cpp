@@ -67,7 +67,7 @@ void SQLiteDatabase::ChangePassword(const QString& newPassword)
 
 int SQLiteDatabase::GetResourcesCount()
 {
-    return m_idx.Count();
+    return static_cast<int>(m_idx.Count());
 }
 
 void SQLiteDatabase::GetResourcesDefinition(ResourcesDefinition& defs)
@@ -87,7 +87,7 @@ void SQLiteDatabase::GetResourcesDefinition(ResourcesDefinition& defs)
 
 void SQLiteDatabase::GetResource(int id, Resource& resource)
 {
-    auto rowId = m_idx.ToRowId(id);
+    auto rowId = static_cast<int>(m_idx.ToRowId(id));
     if (rowId == IndexConverter::InvalidId)
     {
         throw std::runtime_error(QObject::tr("Cannot match id %1 with ROWID").arg(id).toStdString());
@@ -100,6 +100,7 @@ void SQLiteDatabase::GetResource(int id, Resource& resource)
     }
 
     Resource result;
+    resource.data.resize(ColumnCount);
     for (int i = ColumnName; i < ColumnCount; ++i)
     {
         resource.data[i] = m_cryptor.DecryptAsString(query.value(i).toByteArray());
@@ -108,16 +109,43 @@ void SQLiteDatabase::GetResource(int id, Resource& resource)
 
 void SQLiteDatabase::GetResources(int from, int to, QVector<Resource>& resources)
 {
-    // TODO
+    auto fromRowid = m_idx.ToRowId(from);
+    auto toRowId = m_idx.ToRowId(to);
+
+    if (fromRowid == IndexConverter::InvalidId || toRowId == IndexConverter::InvalidId)
+    {
+        throw std::runtime_error(QObject::tr("Unable to match IDs %1 and %2 to ROWIDs").arg(from).arg(to).toStdString());
+    }
+
+    QSqlQuery query;
+    if (!query.exec(MakeResourcesSelectQuery(fromRowid, toRowId)) || !query.first())
+    {
+        throw std::runtime_error(QObject::tr("Unable to get resource records from the database: %1").arg(query.lastError().text()).toStdString());
+    }
+
+    if (query.size() <= 0)
+    {
+        return;
+    }
+
+    do
+    {
+        Resource result;
+        for (int i = ColumnName; i < ColumnCount; ++i)
+        {
+            result.data[i] = m_cryptor.DecryptAsString(query.value(i).toByteArray());
+        }
+        resources.emplace_back(std::move(result));
+    } while(query.next());
 }
 
 void SQLiteDatabase::SetResource(int id, const Resource& resource)
 {
     QSqlQuery query;
-    query.prepare(MakeResourceUpdateQuery(id));
+    query.prepare(MakeResourceUpdateQuery(m_idx.ToRowId(id)));
     for (int i = ColumnName; i < ColumnCount; ++i)
     {
-        query.addBindValue(m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i))));
+        query.bindValue(GetColumnPlaceholder(static_cast<Column>(i)), m_cryptor.Encrypt(resource.data.at(i)));
     }
 
     if (!query.exec())

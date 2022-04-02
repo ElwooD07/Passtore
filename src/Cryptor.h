@@ -20,7 +20,7 @@ namespace passtore
         const QByteArray& Key() const;
         const QByteArray& Iv() const;
 
-        static constexpr size_t GetKeySize();
+        static size_t GetKeySize();
 
     private:
         void CheckData(const QByteArray& key, const QByteArray& iv) const;

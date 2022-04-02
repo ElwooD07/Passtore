@@ -18,7 +18,23 @@ namespace
 }
 
 
-const char* GetColumnName(Column col)
+const char* passtore::GetColumnName(Column col)
 {
     return s_columnNames[col];
+}
+
+const QString& passtore::GetColumnPlaceholder(passtore::Column col)
+{
+    static QVector<QString> s_placeholders;
+    if (s_placeholders.isEmpty())
+    {
+        s_placeholders.resize(passtore::ColumnCount);
+    }
+
+    if (s_placeholders[col].isEmpty())
+    {
+        s_placeholders[col] = QString(":%1").arg(GetColumnName(col));
+    }
+
+    return s_placeholders[col];
 }
