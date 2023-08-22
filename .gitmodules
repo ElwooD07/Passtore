@@ -1,6 +1,0 @@
-[submodule "3rd-party/TinyAES"]
-	path = 3rd-party/TinyAES
-	url = https://github.com/kokke/tiny-AES-c.git
-[submodule "3rd-party/gtest"]
-	path = 3rd-party/gtest
-	url = https://github.com/google/googletest.git
