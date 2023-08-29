@@ -2,6 +2,7 @@
 #include "Storages/SQLite/SQLiteColumns.h"
 #include "Storages/SQLite/SQLiteDatabase.h"
 #include "Storages/SQLite/SQLiteDatabaseQueries.h"
+#include "Utils/DataUtils.h"
 
 using namespace passtore;
 
@@ -12,10 +13,7 @@ namespace
 
 sqlite::SQLiteDatabase::SQLiteDatabase()
     : m_idx(m_db)
-{
-    auto keyAndIv = QByteArray(32, '\0');
-    m_cryptor.SetKeys(keyAndIv);
-}
+{ }
 
 void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::string& password)
 {
@@ -32,39 +30,42 @@ void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::
     }
 
     // Uncomment it for tests when the database is empty
-    /*Resource res;
-    res.SetValue(ResourcePropertyResource, "ResName");
-    res.SetValue(ResourcePropertyPassword, "arbadakarba");
-    res.SetValue(ResourcePropertyDescription, "bla-bla-bla");
+    Resource res;
+    res.data.push_back("ResName");
+    res.data.push_back("arbadakarba");
+    res.data.push_back("bla-bla-bla");
     int id = AddResource(res);
-    qDebug() << id;*/
+    qDebug() << id;
 
     // TODO : Collect data from DB
 }
 
 void sqlite::SQLiteDatabase::ChangePassword(const std::string& oldPassword, const std::string& newPassword)
 {
-    auto passwordData = QByteArray::fromRawData(newPassword.data(), newPassword.size());
-    QByteArray passwordHash = QCryptographicHash::hash(passwordData, QCryptographicHash::Sha256);
-    Cryptor passwordCryptor(passwordHash);
+    // TODO: read phrase and check old password
+    Data passwordData(newPassword.begin(), newPassword.end());
+    Cryptor passwordCryptor(utils::Sha256Calculate(passwordData.data(), passwordData.size()));
 
-    // TODO: read phrase
-    // decrypt it with hash
-    QByteArray newPhrase = passwordCryptor.Encrypt(QString(s_phraseDecryptedExpected.c_str()).toUtf8());
-    QByteArray newKeys = passwordCryptor.Encrypt(m_cryptor.KeyAndIv());
+    Data newPhrase;
+    passwordCryptor.Encrypt(s_phraseDecryptedExpected, newPhrase);
+    Data newKeys;
+    passwordCryptor.Encrypt(m_cryptor.GetKeyAndIv(), newKeys);
 
     auto transaction = m_db.CreateTransaction();
 
     // Delete old Metadata table and create new one
+    // TODO: Implement password chain to not delete the previous metadata
     m_db.ExecQuery("DROP TABLE IF EXISTS Metadata;");
     m_db.ExecQuery("CREATE TABLE Metadata ('phrase' BLOB, 'keys' BLOB);");
 
     auto query = m_db.CreateQuery("INSERT INTO Metadata ('phrase', 'keys') VALUES (?, ?);");
-    query.BindBlob(1, newPhrase.data(), newPhrase.size());
-    query.BindBlob(2, newKeys.data(), newKeys.size());
+    query.BindBlob(1, newPhrase);
+    query.BindBlob(2, newKeys);
     query.Step();
 
     transaction.Commit();
+
+    m_cryptor.SetKeyAndIv(newKeys);
 }
 
 int sqlite::SQLiteDatabase::GetResourcesCount()
@@ -159,7 +160,10 @@ uint64_t sqlite::SQLiteDatabase::AddResource(const Resource& resource)
     for (int i = ColumnName; i < ColumnCount; ++i)
     {
         Data data;
-        m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i)), data);
+        if (resource.data.size() > static_cast<Column>(i))
+        {
+            m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i)), data);
+        }
         query.BindBlob(i + 1, data);
     }
 
@@ -174,7 +178,9 @@ void sqlite::SQLiteDatabase::SwapResources(int first, int second)
 
 void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
 {
-    m_cryptor.SetKeys(Cryptor::GenerateRandomKeyAndIv());
+    Data keys;
+    Cryptor::GenerateRandomKeyAndIv(keys);
+    m_cryptor.SetKeyAndIv(std::move(keys));
 
     ChangePassword("", password);
 
@@ -195,15 +201,14 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
 
     BlobData phrase;
     query.ColumnBlob(1, phrase);
-    BlobData encryptedKey;
-    query.ColumnBlob(2, encryptedKey);
+    BlobData encryptedKeys;
+    query.ColumnBlob(2, encryptedKeys);
 
-    Cryptor passwordCryptor(QCryptographicHash::hash(password, QCryptographicHash::Sha256));
-    std::string phraseDecrypted = passwordCryptor.DecryptAsString(QByteArray::fromRawData(reinterpret_cast<const char*>(phrase.data()),
-                                                                                          phrase.size())).toUtf8().constData();
-    if (phraseDecrypted != s_phraseDecryptedExpected)
+    Cryptor passwordCryptor(utils::Sha256Calculate(password.data(), password.size()));
+    std::string phraseDecrypted = passwordCryptor.DecryptAsStdString(phrase);
+    if (phraseDecrypted == s_phraseDecryptedExpected)
     {
         throw std::runtime_error("Invalid password");
     }
-    m_cryptor.SetKeys(passwordCryptor.Decrypt(QByteArray::fromRawData(reinterpret_cast<const char*>(encryptedKey.data()), encryptedKey.size())));
+    m_cryptor.SetKeyAndIv(std::move(encryptedKeys));
 }

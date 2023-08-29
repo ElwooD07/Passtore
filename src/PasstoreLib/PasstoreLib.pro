@@ -25,7 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += staticlib c++17
 
 SOURCES += \
-    Settings.cpp \
+    Security/Cryptor.cpp \
     Storages/SQLite/CellsCryptor.cpp \
     Storages/SQLite/Connection.cpp \
     Storages/SQLite/IndexConverter.cpp \
@@ -34,12 +34,13 @@ SOURCES += \
     Storages/SQLite/SQLiteDatabase.cpp \
     Storages/SQLite/SQLiteDatabaseQueries.cpp \
     Storages/SQLite/Transaction.cpp \
-    Cryptor.cpp \
+    Utils/DataUtils.cpp \
+    Utils/sha256.cpp \
     pch.cpp
 
 HEADERS += \
+    Security/Cryptor.h \
     Security/SensitiveData.h \
-    Settings.h \
     Storages/IStorage.h \
     Storages/SQLite/CellsCryptor.h \
     Storages/SQLite/Connection.h \
@@ -49,7 +50,8 @@ HEADERS += \
     Storages/SQLite/SQLiteDatabase.h \
     Storages/SQLite/SQLiteDatabaseQueries.h \
     Storages/SQLite/Transaction.h \
-    Cryptor.h \
+    Utils/DataUtils.h \
+    Utils/sha256.h \
     pch.h
 
 CONFIG += precompile_header

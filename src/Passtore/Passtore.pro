@@ -13,6 +13,7 @@ HEADERS += \
     Models/ResourceTableModel.h \
     Models/ResourceTableModelRoles.h \
     Models/ResourceViewDelegate.h \
+    Settings.h \
     Widgets/ColumnSettingsWidget.h \
     Widgets/MainWindow.h \
     Widgets/ResourcesListWidget.h \
@@ -22,6 +23,7 @@ HEADERS += \
 SOURCES += \
     Models/ResourceTableModel.cpp \
     Models/ResourceViewDelegate.cpp \
+    Settings.cpp \
     Widgets/ColumnSettingsWidget.cpp \
     Widgets/MainWindow.cpp \
     Widgets/ResourcesListWidget.cpp \

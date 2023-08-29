@@ -8,7 +8,6 @@ sqlite::IndexConverter::IndexConverter(Connection& connection)
     : m_connection(connection)
 { }
 
-
 int sqlite::IndexConverter::Count()
 {
     return GetRowIds().size();

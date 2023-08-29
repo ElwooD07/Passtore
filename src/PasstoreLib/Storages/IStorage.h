@@ -16,14 +16,15 @@ namespace passtore
 
     struct Resource
     {
-        std::vector<std::string> data; // The array of data for each column
+        // The array of data for each column. Each data considered as UTF8 string and sensitive
+        std::vector<std::string> data;
 
         ~Resource()
         {
             // all the data considered as sensitive
             for (auto it = data.begin(); it != data.end(); ++it)
             {
-                // Erase data to not keep sensitive data in memory
+                // Erase data to not keep it in heap
                 memset(it->data(), 0, it->size());
             }
         }
