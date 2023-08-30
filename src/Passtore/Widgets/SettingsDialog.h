@@ -1,7 +1,7 @@
 #pragma once
 #include "ui_SettingsDialog.h"
 #include "Settings.h"
-#include "Storages/IStorage.h"
+#include "Storages/IResourceStorage.h"
 
 namespace passtore
 {

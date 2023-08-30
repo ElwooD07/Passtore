@@ -3,7 +3,7 @@
 namespace passtore
 {
     // Not thread safe
-    // It is template just for the start, it will more efficient as a template if needed in future
+    // ! It is so strange, reimplement it !
     template<typename K, class T>
     class Cache
     {

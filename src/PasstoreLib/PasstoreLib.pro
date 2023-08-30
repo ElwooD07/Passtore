@@ -26,13 +26,11 @@ CONFIG += staticlib c++17
 
 SOURCES += \
     Security/Cryptor.cpp \
+    Storages/Marshaling.cpp \
     Storages/SQLite/CellsCryptor.cpp \
     Storages/SQLite/Connection.cpp \
-    Storages/SQLite/IndexConverter.cpp \
     Storages/SQLite/Query.cpp \
-    Storages/SQLite/SQLiteColumns.cpp \
     Storages/SQLite/SQLiteDatabase.cpp \
-    Storages/SQLite/SQLiteDatabaseQueries.cpp \
     Storages/SQLite/Transaction.cpp \
     Utils/DataUtils.cpp \
     Utils/sha256.cpp \
@@ -41,14 +39,13 @@ SOURCES += \
 HEADERS += \
     Security/Cryptor.h \
     Security/SensitiveData.h \
-    Storages/IStorage.h \
+    Storages/IResourceStorage.h \
+    Storages/Marshaling.h \
+    Storages/Resource.h \
     Storages/SQLite/CellsCryptor.h \
     Storages/SQLite/Connection.h \
-    Storages/SQLite/IndexConverter.h \
     Storages/SQLite/Query.h \
-    Storages/SQLite/SQLiteColumns.h \
     Storages/SQLite/SQLiteDatabase.h \
-    Storages/SQLite/SQLiteDatabaseQueries.h \
     Storages/SQLite/Transaction.h \
     Utils/DataUtils.h \
     Utils/sha256.h \
@@ -57,6 +54,8 @@ HEADERS += \
 CONFIG += precompile_header
 PRECOMPILED_HEADER = pch.h
 PRECOMPILED_SOURCE = pch.cpp
+
+INCLUDEPATH += $$PWD/../../ext/SimpleJSON
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

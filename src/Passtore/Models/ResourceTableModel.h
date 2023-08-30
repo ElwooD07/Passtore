@@ -1,17 +1,18 @@
 #pragma once
 #include <QSortFilterProxyModel>
-#include "Storages/IStorage.h"
+#include "Storages/IResourceStorage.h"
 #include "Settings.h"
 #include "Cache.h"
 
 namespace passtore
 {
+    // ASAP: make it tree
     class ResourceTableModel: public QAbstractTableModel
     {
         Q_OBJECT
 
     public:
-        ResourceTableModel(QObject* parent, IStorage* storage);
+        ResourceTableModel(QObject* parent, IResourceStorage* storage);
         ResourceTableModel(const ResourceTableModel&) = delete;
 
         virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -35,8 +36,7 @@ namespace passtore
         bool IndexIsValid(const QModelIndex& idx) const;
 
     private:
-        IStorage* m_storage = nullptr;
-        ResourcesDefinition m_resourcesDefs;
+        IResourceStorage* m_storage = nullptr;
         QVector<bool> m_columnsVisibility;
         TableSettings m_sets;
         mutable Cache<int, Resource> m_cache;

@@ -1,3 +1,4 @@
 TEMPLATE = subdirs
 
-SUBDIRS += gtest plog sqlite TinyAES
+SUBDIRS += gtest plog sqlite TinyAES \
+    SimpleJSON

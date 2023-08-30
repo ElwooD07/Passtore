@@ -4,7 +4,7 @@
 #include "Models/ResourceTableModel.h"
 #include "Models/ResourceViewDelegate.h"
 
-passtore::MainWindow::MainWindow(QWidget* parent, IStorage* storage)
+passtore::MainWindow::MainWindow(QWidget* parent, IResourceStorage* storage)
     : QMainWindow(parent)
 {
     m_ui.setupUi(this);

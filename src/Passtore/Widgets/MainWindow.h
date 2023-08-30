@@ -1,7 +1,7 @@
 #pragma once
 #include <QMainWindow>
 #include "ui_MainWindow.h"
-#include "Storages/IStorage.h"
+#include "Storages/IResourceStorage.h"
 
 namespace Ui {
     class MainWindow;
@@ -14,7 +14,7 @@ namespace passtore
         Q_OBJECT
 
     public:
-        explicit MainWindow(QWidget* parent, IStorage* database);
+        explicit MainWindow(QWidget* parent, IResourceStorage* database);
 
     public slots:
         void OnErrorOccurred(const QString& message);

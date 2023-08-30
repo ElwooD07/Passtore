@@ -4,7 +4,7 @@
 
 using namespace passtore;
 
-ResourceTableModel::ResourceTableModel(QObject* parent, IStorage* storage)
+ResourceTableModel::ResourceTableModel(QObject* parent, IResourceStorage* storage)
     : QAbstractTableModel(parent)
     , m_storage(storage)
     , m_cache(1000)
@@ -43,7 +43,7 @@ QVariant ResourceTableModel::data(const QModelIndex& index, int role) const
             auto resource = GetResource(index.row());
             if (resource != nullptr)
             {
-                return QString::fromUtf8(resource->data.at(index.column()).c_str());
+                return QString::fromUtf8(resource->values.at(index.column()).c_str());
             }
             break;
         }
@@ -72,8 +72,8 @@ bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value
         {
             return false;
         }
-
-        resource->data[index.column()] = value.toString().toUtf8().data();
+        
+        resource->values[index.column()] = value.toString().toUtf8().data();
         m_storage->SetResource(index.row(), *resource);
     }
     catch (const std::exception& ex)
@@ -108,7 +108,7 @@ passtore::Resource* ResourceTableModel::GetResource(int id) const
         }
 
         Resource newResource;
-        m_storage->GetResource(id, newResource);
+        m_storage->GetOne(id, newResource);
         return &m_cache.Set(id, newResource);
     }
     catch(const std::exception& ex)

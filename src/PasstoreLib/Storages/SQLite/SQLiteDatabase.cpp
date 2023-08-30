@@ -1,7 +1,6 @@
 #include "pch.h"
-#include "Storages/SQLite/SQLiteColumns.h"
+#include "Storages/Marshaling.h"
 #include "Storages/SQLite/SQLiteDatabase.h"
-#include "Storages/SQLite/SQLiteDatabaseQueries.h"
 #include "Utils/DataUtils.h"
 
 using namespace passtore;
@@ -12,7 +11,6 @@ namespace
 }
 
 sqlite::SQLiteDatabase::SQLiteDatabase()
-    : m_idx(m_db)
 { }
 
 void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::string& password)
@@ -31,10 +29,9 @@ void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::
 
     // Uncomment it for tests when the database is empty
     Resource res;
-    res.data.push_back("ResName");
-    res.data.push_back("arbadakarba");
-    res.data.push_back("bla-bla-bla");
-    int id = AddResource(res);
+    res.id = InvalidResourceId;
+    res.subject = "test";
+    int id = Upsert(res);
     qDebug() << id;
 
     // TODO : Collect data from DB
@@ -68,110 +65,87 @@ void sqlite::SQLiteDatabase::ChangePassword(const std::string& oldPassword, cons
     m_cryptor.SetKeyAndIv(newKeys);
 }
 
-int sqlite::SQLiteDatabase::GetResourcesCount()
+ResourceState sqlite::SQLiteDatabase::GetOne(ResourceId id, Resource& resource)
 {
-    return static_cast<int>(m_idx.Count());
-}
+    static std::string s_queryStr("SELECT Data FROM Resources WHERE ROWID=");
+    auto queryStr = s_queryStr + std::to_string(id);
+    auto query = m_db.CreateQuery(queryStr);
 
-void sqlite::SQLiteDatabase::GetResourcesDefinition(ResourcesDefinition& defs)
-{
-    if (m_defs.isEmpty())
+    if (!query.Step())
     {
-        for (size_t col = ColumnFirst; col < ColumnCount; ++col)
-        {
-            m_defs.emplace_back(ResourceValueDefinition{ QObject::tr(GetColumnName(static_cast<Column>(col))).toStdString() });
-        }
-        m_defs[ColumnPassword].critical = true;
-        m_defs[ColumnDescription].big = true;
-        m_defs[ColumnAdditional].big = true;
-    }
-    defs = m_defs;
-}
-
-void sqlite::SQLiteDatabase::GetResource(int id, Resource& resource)
-{
-    auto rowId = static_cast<int>(m_idx.ToRowId(id));
-    if (rowId == IndexConverter::InvalidId)
-    {
-        throw std::runtime_error(QObject::tr("Cannot match id %1 with ROWID").arg(id).toStdString());
+        return ResourceState::Deleted;
     }
 
-    auto query = m_db.CreateQuery(MakeResourceSelectQuery(rowId));
-    query.Step();
+    resource.id = id;
+    Data encryptedData;
+    query.ColumnBlob(0, encryptedData);
+    UnmarshalResourceFromJSON(m_cryptor.DecryptAsStdString(encryptedData), resource);
 
-    Resource result;
-    resource.data.resize(ColumnCount);
-    for (int i = ColumnName; i < ColumnCount; ++i)
+    return ResourceState::Present;
+}
+
+ResourceState sqlite::SQLiteDatabase::GetNext(ResourceId id, Resource& resource)
+{
+    std::string queryStr("SELECT RowId, Data FROM Resources WHERE ROWID>");
+    if (id == InvalidResourceId)
     {
-        BlobData data;
-        query.ColumnBlob(i, data);
-        resource.data[i] = m_cryptor.DecryptAsStdString(data);
+        id = 0;
     }
-}
+    queryStr += std::to_string(id);
+    queryStr += " LIMIT 1;";
+    auto query = m_db.CreateQuery(queryStr);
 
-void sqlite::SQLiteDatabase::GetResources(int from, int to, std::vector<Resource>& resources)
-{
-    auto fromRowid = m_idx.ToRowId(from);
-    auto toRowId = m_idx.ToRowId(to);
-
-    if (fromRowid == IndexConverter::InvalidId || toRowId == IndexConverter::InvalidId)
+    if (!query.Step())
     {
-        throw std::runtime_error(QObject::tr("Unable to match IDs %1 and %2 to ROWIDs").arg(from).arg(to).toStdString());
-    }
-
-    auto query = m_db.CreateQuery(MakeResourcesSelectQuery(fromRowid, toRowId));
-    while (query.Step())
-    {
-        Resource result;
-        for (int i = ColumnName; i < ColumnCount; ++i)
-        {
-            Data data;
-            query.ColumnBlob(i, data);
-            result.data[i] = m_cryptor.DecryptAsStdString(data);
-        }
-        resources.emplace_back(std::move(result));
-    };
-}
-
-void sqlite::SQLiteDatabase::SetResource(int id, const Resource& resource)
-{
-    auto query = m_db.CreateQuery(MakeResourceUpdateQuery(m_idx.ToRowId(id)));
-    for (int i = ColumnName; i < ColumnCount; ++i)
-    {
-        Data data;
-        m_cryptor.Encrypt(resource.data.at(i), data);
-        query.BindBlob(i + 1, data);
-    }
-    query.Step();
-}
-
-void sqlite::SQLiteDatabase::SetResourceValue(int id, int valueId, const QString& value)
-{
-    auto query = m_db.CreateQuery(MakeResourceValueUpdateQuery(m_idx.ToRowId(id), valueId));
-    Data data;
-    m_cryptor.Encrypt(value, data);
-    query.BindBlob(1, data);
-    query.Step();
-}
-
-uint64_t sqlite::SQLiteDatabase::AddResource(const Resource& resource)
-{
-    auto query = m_db.CreateQuery(MakeResourceInsertQueryValues());
-    for (int i = ColumnName; i < ColumnCount; ++i)
-    {
-        Data data;
-        if (resource.data.size() > static_cast<Column>(i))
-        {
-            m_cryptor.Encrypt(resource.data.at(static_cast<Column>(i)), data);
-        }
-        query.BindBlob(i + 1, data);
+        return ResourceState::Deleted;
     }
 
-    query.Step();
-    return query.LastRowId();
+    resource.id = query.ColumnInt(0);
+    Data encryptedData;
+    query.ColumnBlob(1, encryptedData);
+    UnmarshalResourceFromJSON(m_cryptor.DecryptAsStdString(encryptedData), resource);
+
+    return ResourceState::Present;
 }
 
-void sqlite::SQLiteDatabase::SwapResources(int first, int second)
+ResourceId sqlite::SQLiteDatabase::Upsert(const Resource& resource)
+{
+    auto json = MarshalResourceToJSON(resource);
+    Data encrypted;
+    m_cryptor.Encrypt(json, encrypted);
+
+    auto query = m_db.CreateQuery();
+    if (resource.id == InvalidResourceId)
+    {
+        static std::string s_queryStr("INSERT INTO Resources (Data) VALUES (?) WHERE RowId=");
+        query.Prepare(s_queryStr + std::to_string(resource.id));
+    }
+    else
+    {
+        static std::string s_queryStr("UPDATE 'Resources' SET 'Data'=? WHERE ROWID='");
+        query.Prepare(s_queryStr + std::to_string(resource.id));
+    }
+
+    query.BindBlob(1, encrypted);
+    try
+    {
+        query.Step();
+    }
+    catch (const std::exception& ex)
+    {
+        LOGE << "UpsertResource failed: " << ex.what();
+        return InvalidResourceId;
+    }
+
+    return resource.id == InvalidResourceId ? query.LastRowId() : resource.id;
+}
+
+void sqlite::SQLiteDatabase::DeleteResource(ResourceId id)
+{
+    // TODO
+}
+
+void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
 {
     // TODO
 }
@@ -184,7 +158,7 @@ void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
 
     ChangePassword("", password);
 
-    m_db.ExecQuery(MakeResourcesTableCreateQuery());
+    m_db.ExecQuery("CREATE TABLE 'Resources' ('RowId' INTEGER PRIMARY KEY, 'Data' BLOB);");
 }
 
 void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
@@ -206,7 +180,7 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
 
     Cryptor passwordCryptor(utils::Sha256Calculate(password.data(), password.size()));
     std::string phraseDecrypted = passwordCryptor.DecryptAsStdString(phrase);
-    if (phraseDecrypted == s_phraseDecryptedExpected)
+    if (phraseDecrypted != s_phraseDecryptedExpected)
     {
         throw std::runtime_error("Invalid password");
     }

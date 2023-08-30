@@ -5,6 +5,7 @@ QT     += core
 
 SOURCES += \
         CryptorTest.cpp \
+        SQLiteDatabaseTest.cpp \
         main.cpp \
         pch.cpp
 

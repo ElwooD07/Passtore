@@ -1,6 +1,6 @@
 #pragma once
 #include <QStyledItemDelegate>
-#include "Storages/IStorage.h"
+#include "Storages/IResourceStorage.h"
 
 namespace passtore
 {
