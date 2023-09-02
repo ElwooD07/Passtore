@@ -4,9 +4,9 @@
 
 using namespace passtore;
 
-ResourceViewDelegate::ResourceViewDelegate(QObject* parent, const ResourcesDefinition& defs)
+ResourceViewDelegate::ResourceViewDelegate(QObject* parent, IResourceStorage& storage)
     : QStyledItemDelegate(parent)
-    , m_defs(defs)
+    , m_storage(storage)
 { }
 
 QWidget* ResourceViewDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& /*option*/, const QModelIndex& index) const

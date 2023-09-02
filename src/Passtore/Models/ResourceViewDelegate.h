@@ -7,7 +7,7 @@ namespace passtore
     class ResourceViewDelegate: public QStyledItemDelegate
     {
     public:
-        ResourceViewDelegate(QObject* parent, const ResourcesDefinition& defs);
+        ResourceViewDelegate(QObject* parent, IResourceStorage& storage);
 
         QWidget* createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
         void setEditorData(QWidget *editor, const QModelIndex &index) const override;
@@ -15,6 +15,5 @@ namespace passtore
         void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
     private:
-        ResourcesDefinition m_defs;
-    };
+        IResourceStorage& m_storage;
 }

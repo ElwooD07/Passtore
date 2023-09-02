@@ -8,18 +8,18 @@ ResourceTableModel::ResourceTableModel(QObject* parent, IResourceStorage* storag
     : QAbstractTableModel(parent)
     , m_storage(storage)
     , m_cache(1000)
-{
-    storage->GetResourcesDefinition(m_resourcesDefs);
-}
+{ }
 
 int ResourceTableModel::rowCount(const QModelIndex&) const
 {
-    return m_storage->GetResourcesCount();
+    // TODO
+    return 0;
 }
 
 int ResourceTableModel::columnCount(const QModelIndex&) const
 {
-    return m_resourcesDefs.size();
+    // TODO
+    return 0;
 }
 
 bool ResourceTableModel::hasChildren(const QModelIndex& parent) const
