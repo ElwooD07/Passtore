@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Widgets/MainWindow.h"
 #include "Storages/SQLite/SQLiteDatabase.h" // TODO: load available storages from plugins
 

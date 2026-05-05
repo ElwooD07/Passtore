@@ -1,0 +1,23 @@
+# CMake configuration for Passtore project
+
+cmake_minimum_required(VERSION 3.10)
+project(Passtore)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Qt6
+set(CMAKE_PREFIX_PATH "C:/Qt/6.1.1/msvc2019_64")
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
+# Set output directories
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Add subdirectories
+add_subdirectory(ext)
+add_subdirectory(src)

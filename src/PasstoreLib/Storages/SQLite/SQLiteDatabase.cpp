@@ -27,13 +27,6 @@ void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::
         InitOpenedDb(password);
     }
 
-    // Uncomment it for tests when the database is empty
-    Resource res;
-    res.id = InvalidResourceId;
-    res.subject = "test";
-    int id = Upsert(res);
-    qDebug() << id;
-
     // TODO : Collect data from DB
 }
 
@@ -117,13 +110,13 @@ ResourceId sqlite::SQLiteDatabase::Upsert(const Resource& resource)
     auto query = m_db.CreateQuery();
     if (resource.id == InvalidResourceId)
     {
-        static std::string s_queryStr("INSERT INTO Resources (Data) VALUES (?) WHERE RowId=");
-        query.Prepare(s_queryStr + std::to_string(resource.id));
+        static const std::string s_queryStr("INSERT INTO Resources (Data) VALUES (?);");
+        query.Prepare(s_queryStr);
     }
     else
     {
-        static std::string s_queryStr("UPDATE 'Resources' SET 'Data'=? WHERE ROWID='");
-        query.Prepare(s_queryStr + std::to_string(resource.id));
+        static const std::string s_queryStr("UPDATE Resources SET Data=? WHERE ROWID=");
+        query.Prepare(s_queryStr + std::to_string(resource.id) + ";");
     }
 
     query.BindBlob(1, encrypted);
@@ -150,6 +143,19 @@ void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
     // TODO
 }
 
+ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
+{
+    // TODO: persist and load resource definitions from database
+    return {};
+}
+
+ResourceId sqlite::SQLiteDatabase::GetResourcesCount()
+{
+    auto query = m_db.CreateQuery("SELECT count(*) FROM Resources;");
+    query.Step();
+    return static_cast<ResourceId>(query.ColumnInt(0));
+}
+
 void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
 {
     Data keys;
@@ -170,12 +176,12 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
 
     if (rowsCount != 1)
     {
-        throw std::runtime_error(QObject::tr("The database has wrong scheme or corrupted").toStdString());
+        throw std::runtime_error("The database has wrong scheme or corrupted");
     }
 
-    BlobData phrase;
+    Data phrase;
     query.ColumnBlob(1, phrase);
-    BlobData encryptedKeys;
+    Data encryptedKeys;
     query.ColumnBlob(2, encryptedKeys);
 
     Cryptor passwordCryptor(utils::Sha256Calculate(password.data(), password.size()));

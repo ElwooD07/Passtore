@@ -1,5 +1,6 @@
 #pragma once
-
+#include <string>
+#include <mutex>
 namespace passtore
 {
     namespace sqlite

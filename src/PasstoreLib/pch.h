@@ -1,6 +1,4 @@
 #pragma once
-#include <QtCore>
-
 #include <stdint.h>
 #include <assert.h>
 #include <string>
@@ -10,7 +8,6 @@
 #include <random>
 
 #include "sqlite3.h"
-#include "aes.hpp"
 #include "plog/Log.h"
 
 // Changing product name and major version will affect the compatibility with previous versions

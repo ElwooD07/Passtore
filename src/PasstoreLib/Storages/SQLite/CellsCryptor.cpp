@@ -43,9 +43,9 @@ void sqlite::CellsCryptor::MixKeys(const Data& spice, Data& dish)
     assert(dish.size() == spice.size());
     assert(dish.size() % sizeof(portion) == 0);
 
-    for (auto i = 0; i < dish.size() / sizeof(portion); ++i)
+    for (size_t i = 0; i < dish.size() / sizeof(portion); ++i)
     {
-        auto target = reinterpret_cast<portion*>(dish.data()[i*sizeof(portion)]);
-        *target += *reinterpret_cast<portion*>(spice.data()[i*sizeof(portion)]);
+        auto target = reinterpret_cast<portion*>(&dish.data()[i*sizeof(portion)]);
+        *target += *reinterpret_cast<const portion*>(&spice.data()[i*sizeof(portion)]);
     }
 }

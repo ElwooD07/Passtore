@@ -37,6 +37,7 @@ namespace passtore
 
     private:
         IResourceStorage* m_storage = nullptr;
+        ResourcesDefinition m_resourcesDefs;
         QVector<bool> m_columnsVisibility;
         TableSettings m_sets;
         mutable Cache<int, Resource> m_cache;

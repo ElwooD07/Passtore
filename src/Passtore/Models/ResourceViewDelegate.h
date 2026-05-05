@@ -16,4 +16,5 @@ namespace passtore
 
     private:
         IResourceStorage& m_storage;
+    };
 }

@@ -1,8 +1,16 @@
 #pragma once
+#include <filesystem>
 #include "Storages/Resource.h"
 
 namespace passtore
 {
+    struct ResourceDefinition
+    {
+        std::string name;
+        bool big = false;
+    };
+    using ResourcesDefinition = std::vector<ResourceDefinition>;
+
 class IResourceStorage
     {
     public:
@@ -20,5 +28,8 @@ class IResourceStorage
         virtual ResourceId Upsert(const Resource& resource) = 0;
         virtual void DeleteResource(ResourceId id) = 0;
         virtual void Swap(ResourceId first, ResourceId second) = 0;
+
+        virtual ResourcesDefinition GetResourcesDefinition() = 0;
+        virtual ResourceId GetResourcesCount() = 0;
     };
 }

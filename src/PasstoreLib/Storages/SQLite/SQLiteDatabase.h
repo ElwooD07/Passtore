@@ -22,6 +22,8 @@ namespace passtore
             virtual ResourceId Upsert(const Resource& resource) override;
             virtual void DeleteResource(ResourceId id) override;
             virtual void Swap(ResourceId first, ResourceId second) override;
+            virtual ResourcesDefinition GetResourcesDefinition() override;
+            virtual ResourceId GetResourcesCount() override;
 
         private:
             void BuildOpenedDb(const std::string& password);

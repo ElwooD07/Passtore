@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Cryptor.h"
+#include "aes.hpp"
 
 using namespace passtore;
 
@@ -146,7 +147,7 @@ void passtore::Cryptor::CheckKeys(const Data& keyAndIv)
 {
     if (keyAndIv.size() != AES_KEYLEN * 2)
     {
-        throw std::runtime_error(QObject::tr("Cryptor is not initialized with proper AES keys").toStdString());
+        throw std::runtime_error("Cryptor is not initialized with proper AES keys");
     }
 }
 

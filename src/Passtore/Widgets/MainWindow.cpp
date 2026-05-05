@@ -11,10 +11,7 @@ passtore::MainWindow::MainWindow(QWidget* parent, IResourceStorage* storage)
     auto* model = new ResourceTableModel(this, storage);
     connect(model, &ResourceTableModel::ErrorOccurred, this, &MainWindow::OnErrorOccurred);
 
-    ResourcesDefinition defs;
-    storage->GetResourcesDefinition(defs);
-    auto* delegate = new ResourceViewDelegate(this, defs);
-
+    auto* delegate = new ResourceViewDelegate(this, *storage);
     m_ui.centralWidget->layout()->addWidget(new ResourcesListWidget(this, model, delegate));
 }
 

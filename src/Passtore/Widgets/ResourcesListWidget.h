@@ -1,4 +1,5 @@
 #pragma once
+#include <QStyledItemDelegate>
 #include "ui_ResourcesListWidget.h"
 
 namespace passtore

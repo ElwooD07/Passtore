@@ -8,7 +8,9 @@ ResourceTableModel::ResourceTableModel(QObject* parent, IResourceStorage* storag
     : QAbstractTableModel(parent)
     , m_storage(storage)
     , m_cache(1000)
-{ }
+{
+    m_resourcesDefs = storage->GetResourcesDefinition();
+}
 
 int ResourceTableModel::rowCount(const QModelIndex&) const
 {
@@ -43,7 +45,7 @@ QVariant ResourceTableModel::data(const QModelIndex& index, int role) const
             auto resource = GetResource(index.row());
             if (resource != nullptr)
             {
-                return QString::fromUtf8(resource->values.at(index.column()).c_str());
+                return QString::fromUtf8(resource->values.at(index.column()).value.c_str());
             }
             break;
         }
@@ -62,7 +64,7 @@ bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value
 {
     if (!IndexIsValid(index) || role != Qt::EditRole)
     {
-        return {};
+        return false;
     }
 
     try
@@ -73,8 +75,8 @@ bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value
             return false;
         }
         
-        resource->values[index.column()] = value.toString().toUtf8().data();
-        m_storage->SetResource(index.row(), *resource);
+        resource->values[index.column()].value = value.toString().toUtf8().toStdString();
+        m_storage->Upsert(*resource);
     }
     catch (const std::exception& ex)
     {
