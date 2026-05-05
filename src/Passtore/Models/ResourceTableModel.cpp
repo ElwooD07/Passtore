@@ -1,128 +1,138 @@
 #include "pch.h"
 #include "ResourceTableModel.h"
-#include "ResourceTableModelRoles.h"
 
 using namespace passtore;
 
-ResourceTableModel::ResourceTableModel(QObject* parent, IResourceStorage* storage)
-    : QAbstractTableModel(parent)
-    , m_storage(storage)
+ResourceTableModel::ResourceTableModel(IResourceStorage* storage)
+    : m_storage(storage)
     , m_cache(1000)
 {
     m_resourcesDefs = storage->GetResourcesDefinition();
 }
 
-int ResourceTableModel::rowCount(const QModelIndex&) const
+int ResourceTableModel::rowCount() const
 {
-    // TODO
-    return 0;
+    return static_cast<int>(m_storage->GetResourcesCount());
 }
 
-int ResourceTableModel::columnCount(const QModelIndex&) const
+int ResourceTableModel::columnCount() const
 {
-    // TODO
-    return 0;
+    return static_cast<int>(m_resourcesDefs.size());
 }
 
-bool ResourceTableModel::hasChildren(const QModelIndex& parent) const
+std::string ResourceTableModel::cellData(int row, int col) const
 {
-    return !parent.isValid();
-}
-
-QVariant ResourceTableModel::data(const QModelIndex& index, int role) const
-{
-    if (!IndexIsValid(index))
-    {
-        return {};
-    }
-
     try
     {
-        switch (role)
-        {
-        case Qt::DisplayRole:
-        {
-            auto resource = GetResource(index.row());
-            if (resource != nullptr)
-            {
-                return QString::fromUtf8(resource->values.at(index.column()).value.c_str());
-            }
-            break;
-        }
-        case ResourceTableModelRole::IsBigColumn:
-            return m_resourcesDefs.at(index.column()).big;
-        }
-    }
-    catch(const std::exception& ex)
-    {
-        emit ErrorOccurred(ex.what());
-    }
-    return { };
-}
-
-bool ResourceTableModel::setData(const QModelIndex& index, const QVariant& value, int role)
-{
-    if (!IndexIsValid(index) || role != Qt::EditRole)
-    {
-        return false;
-    }
-
-    try
-    {
-        auto resource = GetResource(index.row());
-        if (resource == nullptr)
-        {
-            return false;
-        }
-        
-        resource->values[index.column()].value = value.toString().toUtf8().toStdString();
-        m_storage->Upsert(*resource);
+        auto* res = GetResource(row);
+        if (res && col < static_cast<int>(res->values.size()))
+            return res->values[col].value;
     }
     catch (const std::exception& ex)
     {
-        emit ErrorOccurred(ex.what());
+        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+    }
+    return {};
+}
+
+bool ResourceTableModel::isBigColumn(int col) const
+{
+    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size()))
+        return false;
+    return m_resourcesDefs[col].big;
+}
+
+std::string ResourceTableModel::columnName(int col) const
+{
+    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size()))
+        return {};
+    return m_resourcesDefs[col].name;
+}
+
+std::string ResourceTableModel::rowSubject(int row) const
+{
+    auto* res = GetResource(row);
+    return res ? res->subject : std::string{};
+}
+
+bool ResourceTableModel::setCellData(int row, int col, const std::string& value)
+{
+    try
+    {
+        auto* res = GetResource(row);
+        if (!res) return false;
+        if (col >= static_cast<int>(res->values.size())) return false;
+        res->values[col].value = value;
+        m_storage->Upsert(*res);
+        return true;
+    }
+    catch (const std::exception& ex)
+    {
+        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
     }
     return false;
 }
 
-Qt::ItemFlags ResourceTableModel::flags(const QModelIndex&) const
+ResourceId ResourceTableModel::rowId(int row) const
 {
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+    auto* res = GetResource(row);
+    return res ? res->id : InvalidResourceId;
 }
 
-QVariant ResourceTableModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
-    {
-        return QString::fromUtf8(m_resourcesDefs.at(section).name.c_str());
-    }
-    return { };
-}
-
-passtore::Resource* ResourceTableModel::GetResource(int id) const
+int ResourceTableModel::addRow()
 {
     try
     {
-        auto cachedResource = m_cache.Get(id);
-        if (cachedResource != nullptr)
-        {
-            return cachedResource;
-        }
-
-        Resource newResource;
-        m_storage->GetOne(id, newResource);
-        return &m_cache.Set(id, newResource);
+        Resource res;
+        res.id = InvalidResourceId;
+        res.subject = "New entry";
+        res.values.resize(m_resourcesDefs.size());
+        m_storage->Upsert(res);
+        return rowCount() - 1;
     }
-    catch(const std::exception& ex)
+    catch (const std::exception& ex)
     {
-        emit ErrorOccurred(tr("Failed to get resource %1: '%2'").arg(id).arg(ex.what()));
+        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
     }
-    return nullptr;
+    return -1;
 }
 
-bool ResourceTableModel::IndexIsValid(const QModelIndex& index) const
+bool ResourceTableModel::deleteRow(int row)
 {
-    return index.isValid() &&
-        (index.row() < m_storage->GetResourcesCount()) &&
-        (index.column() < m_resourcesDefs.size());
+    try
+    {
+        ResourceId id = rowId(row);
+        if (id == InvalidResourceId) return false;
+        m_storage->DeleteResource(id);
+        m_cache.Remove(row);
+        return true;
+    }
+    catch (const std::exception& ex)
+    {
+        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+    }
+    return false;
+}
+
+void ResourceTableModel::setErrorCallback(ErrorCallback cb, void* ctx)
+{
+    m_errorCb = cb;
+    m_errorCtx = ctx;
+}
+
+Resource* ResourceTableModel::GetResource(int row) const
+{
+    try
+    {
+        auto* cached = m_cache.Get(row);
+        if (cached) return cached;
+        Resource res;
+        m_storage->GetOne(static_cast<ResourceId>(row), res);
+        return &m_cache.Set(row, res);
+    }
+    catch (const std::exception& ex)
+    {
+        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+    }
+    return nullptr;
 }

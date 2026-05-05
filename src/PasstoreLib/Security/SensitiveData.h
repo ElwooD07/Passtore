@@ -42,28 +42,6 @@ namespace passtore
             m_data.assign(text, text + strlen(text));
         }
 
-#ifdef USE_QT
-        void Take(QString&& text)
-        {
-            auto utf8(text.toUtf8());
-            m_data.assign(utf8.begin(), utf8.end());
-
-            ClearContainer(utf8);
-            ClearContainer(text);
-        }
-
-        void Take(QByteArray&& data)
-        {
-            m_data.assign(data.begin(), data.end());
-            ClearContainer(data);
-        }
-
-        QByteArrayView AsByteArray() const
-        {
-            return QByteArrayView(m_data.data(), m_data.size());
-        }
-#endif
-
         template<class Container>
         static void ClearContainer(Container& cont)
         {

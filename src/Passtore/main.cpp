@@ -1,27 +1,24 @@
 #include "pch.h"
 #include "Widgets/MainWindow.h"
-#include "Storages/SQLite/SQLiteDatabase.h" // TODO: load available storages from plugins
+#include "Storages/SQLite/SQLiteDatabase.h"
 
 using namespace passtore;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    QApplication a(argc, argv);
-
     try
     {
         sqlite::SQLiteDatabase db;
-        db.Open("test", "000");
-        //db.CreateResource();
+        db.Open("passtore.db", "000");
 
-        MainWindow w(nullptr, &db);
+        MainWindow w(&db);
         w.show();
 
-        return a.exec();
+        return Fl::run();
     }
-    catch(const std::exception& ex)
+    catch (const std::exception& ex)
     {
-        std::string error = ex.what();
-        QMessageBox::critical(nullptr, "Critical error", error.c_str());
+        fl_alert("Critical error: %s", ex.what());
+        return 1;
     }
 }

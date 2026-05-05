@@ -1,10 +1,208 @@
 #include "pch.h"
 #include "ResourcesListWidget.h"
+#include <FL/fl_draw.H>
+#include <cstring>
 
-passtore::ResourcesListWidget::ResourcesListWidget(QWidget* parent, QAbstractTableModel* model, QStyledItemDelegate* delegate)
-    : QWidget(parent)
+using namespace passtore;
+
+static const int ROW_H = 24;
+static const int COL_W  = 140;
+static const int HDR_H  = 24;
+
+ResourcesListWidget::ResourcesListWidget(int x, int y, int w, int h, ITableModel* model)
+    : Fl_Table_Row(x, y, w, h)
 {
-    m_ui.setupUi(this);
-    m_ui.listView->setModel(model);
-    m_ui.listView->setItemDelegate(delegate);
+    col_header(1);
+    col_header_height(HDR_H);
+    row_height_all(ROW_H);
+    col_width_all(COL_W);
+    col_resize(1);
+    row_resize(0);
+    type(SELECT_SINGLE);
+
+    begin();
+    m_editor = new Fl_Input(0, 0, 0, 0);
+    m_editor->hide();
+    m_editor->box(FL_BORDER_BOX);
+    m_bigEditor = new Fl_Multiline_Input(0, 0, 0, 0);
+    m_bigEditor->hide();
+    m_bigEditor->box(FL_BORDER_BOX);
+    end();
+
+    setModel(model);
+}
+
+ResourcesListWidget::~ResourcesListWidget()
+{
+    cancelEdit();
+}
+
+void ResourcesListWidget::setModel(ITableModel* model)
+{
+    m_model = model;
+    refresh();
+}
+
+void ResourcesListWidget::refresh()
+{
+    if (m_model)
+    {
+        rows(m_model->rowCount());
+        cols(m_model->columnCount());
+    }
+    else
+    {
+        rows(0);
+        cols(0);
+    }
+    redraw();
+}
+
+void ResourcesListWidget::draw_cell(TableContext ctx, int R, int C, int X, int Y, int W, int H)
+{
+    switch (ctx)
+    {
+    case CONTEXT_STARTPAGE:
+        fl_font(FL_HELVETICA, 13);
+        return;
+
+    case CONTEXT_COL_HEADER:
+        fl_push_clip(X, Y, W, H);
+        fl_draw_box(FL_THIN_UP_BOX, X, Y, W, H, FL_BACKGROUND_COLOR);
+        if (m_model)
+        {
+            fl_color(FL_FOREGROUND_COLOR);
+            fl_font(FL_HELVETICA_BOLD, 13);
+            fl_draw(m_model->columnName(C).c_str(), X, Y, W, H, FL_ALIGN_CENTER | FL_ALIGN_CLIP);
+        }
+        fl_pop_clip();
+        return;
+
+    case CONTEXT_CELL:
+        if (R == m_editRow && C == m_editCol) return; // editor widget visible here
+        fl_push_clip(X, Y, W, H);
+        {
+            Fl_Color bg = row_selected(R) ? selection_color() : FL_WHITE;
+            fl_color(bg);
+            fl_rectf(X, Y, W, H);
+
+            if (m_model)
+            {
+                std::string data = m_model->cellData(R, C);
+                // Blur sensitive columns
+                std::string display = (m_model->isBigColumn(C) && !data.empty())
+                    ? std::string(data.size(), '*') : data;
+                // Zero sensitive local copy immediately
+                std::fill(data.begin(), data.end(), '\0');
+
+                fl_color(row_selected(R) ? FL_WHITE : FL_FOREGROUND_COLOR);
+                fl_font(FL_HELVETICA, 13);
+                fl_draw(display.c_str(), X + 4, Y, W - 8, H, FL_ALIGN_LEFT | FL_ALIGN_CLIP);
+                std::fill(display.begin(), display.end(), '\0');
+            }
+            fl_color(FL_DARK3);
+            fl_rect(X, Y, W, H);
+        }
+        fl_pop_clip();
+        return;
+
+    default:
+        return;
+    }
+}
+
+int ResourcesListWidget::handle(int event)
+{
+    // Let Fl_Table_Row handle selection first, then handle editing on top.
+    int result = Fl_Table_Row::handle(event);
+
+    switch (event)
+    {
+    case FL_PUSH:
+        if (Fl::event_clicks() >= 1 && m_model)
+        {
+            int R = 0, C = 0;
+            ResizeFlag rf;
+            TableContext ctx = cursor2rowcol(R, C, rf);
+            if (ctx == CONTEXT_CELL)
+            {
+                int cx, cy, cw, ch;
+                find_cell(CONTEXT_CELL, R, C, cx, cy, cw, ch);
+                startEditing(R, C, cx, cy, cw, ch);
+                return 1;
+            }
+        }
+        break;
+
+    case FL_KEYDOWN:
+        if (m_editRow >= 0)
+        {
+            if (Fl::event_key() == FL_Escape) { cancelEdit(); return 1; }
+            if (Fl::event_key() == FL_Enter && m_model && !m_model->isBigColumn(m_editCol))
+            {
+                commitEdit();
+                return 1;
+            }
+        }
+        break;
+    }
+
+    return result;
+}
+
+void ResourcesListWidget::startEditing(int row, int col, int x, int y, int w, int h)
+{
+    if (m_editRow >= 0) commitEdit();
+    m_editRow = row;
+    m_editCol = col;
+
+    bool big = m_model && m_model->isBigColumn(col);
+    std::string current = m_model ? m_model->cellData(row, col) : "";
+
+    if (big)
+    {
+        m_bigEditor->resize(x, y, w, std::min(h * 4, 96));
+        m_bigEditor->value(current.c_str());
+        m_bigEditor->show();
+        m_bigEditor->take_focus();
+    }
+    else
+    {
+        m_editor->resize(x, y, w, h);
+        m_editor->value(current.c_str());
+        m_editor->show();
+        m_editor->take_focus();
+    }
+    std::fill(current.begin(), current.end(), '\0');
+}
+
+void ResourcesListWidget::commitEdit()
+{
+    if (m_editRow < 0 || !m_model) return;
+
+    bool big = m_model->isBigColumn(m_editCol);
+    Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor) : static_cast<Fl_Input_*>(m_editor);
+
+    std::string newValue(active->value());
+    m_model->setCellData(m_editRow, m_editCol, newValue);
+    std::fill(newValue.begin(), newValue.end(), '\0');
+
+    active->value("");
+    active->hide();
+    m_editRow = -1;
+    m_editCol = -1;
+    redraw();
+}
+
+void ResourcesListWidget::cancelEdit()
+{
+    if (m_editRow < 0) return;
+
+    bool big = m_model && m_model->isBigColumn(m_editCol);
+    Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor) : static_cast<Fl_Input_*>(m_editor);
+    active->value("");
+    active->hide();
+    m_editRow = -1;
+    m_editCol = -1;
+    redraw();
 }

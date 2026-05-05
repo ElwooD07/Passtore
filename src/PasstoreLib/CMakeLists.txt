@@ -54,6 +54,4 @@ target_link_libraries(PasstoreLib
     sqlite
     plog
     TinyAES
-    Qt6::Core
-    Qt6::Widgets
 )

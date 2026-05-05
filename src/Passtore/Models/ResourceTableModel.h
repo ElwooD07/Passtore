@@ -1,45 +1,36 @@
 #pragma once
-#include <QSortFilterProxyModel>
+#include "Models/ITableModel.h"
 #include "Storages/IResourceStorage.h"
-#include "Settings.h"
-#include "Cache.h"
+#include "Models/Cache.h"
 
 namespace passtore
 {
-    // ASAP: make it tree
-    class ResourceTableModel: public QAbstractTableModel
+    class ResourceTableModel : public ITableModel
     {
-        Q_OBJECT
-
     public:
-        ResourceTableModel(QObject* parent, IResourceStorage* storage);
+        explicit ResourceTableModel(IResourceStorage* storage);
         ResourceTableModel(const ResourceTableModel&) = delete;
 
-        virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-        virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-        virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
-
-        virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-        virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
-
-        Qt::ItemFlags flags(const QModelIndex& index) const override;
-
-        virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-    signals:
-        void ErrorOccurred(QString text) const;
+        int rowCount() const override;
+        int columnCount() const override;
+        std::string cellData(int row, int col) const override;
+        bool isBigColumn(int col) const override;
+        std::string columnName(int col) const override;
+        std::string rowSubject(int row) const override;
+        bool setCellData(int row, int col, const std::string& value) override;
+        ResourceId rowId(int row) const override;
+        int addRow() override;
+        bool deleteRow(int row) override;
+        void setErrorCallback(ErrorCallback cb, void* ctx) override;
 
     private:
-        // The returned Resource is editable, it can be explicitly saved to the storage by caller.
-        // Returns nullptr if Resource with given id is not found.
-        Resource* GetResource(int id) const;
-        bool IndexIsValid(const QModelIndex& idx) const;
+        Resource* GetResource(int row) const;
 
     private:
         IResourceStorage* m_storage = nullptr;
         ResourcesDefinition m_resourcesDefs;
-        QVector<bool> m_columnsVisibility;
-        TableSettings m_sets;
         mutable Cache<int, Resource> m_cache;
+        ErrorCallback m_errorCb = nullptr;
+        void* m_errorCtx = nullptr;
     };
 }

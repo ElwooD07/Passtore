@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <QString>
 #include "Utils/DataUtils.h"
 
 // TODO: TEST IT!
@@ -25,15 +24,13 @@ namespace passtore
 
         // Methods are virtual for decorators
         virtual void Encrypt(const std::string_view& in, Data& out);
-        virtual void Encrypt(const QString& in, Data& out);
         virtual void Encrypt(const Data& in, Data& out);
 
-        virtual QString DecryptAsQString(const Data& data);
         virtual std::string DecryptAsStdString(const Data& data);
 
         static void Encrypt(const Data& keyAndIv, const std::string_view& in, Data& out);
         static void Encrypt(const Data& keyAndIv, const Data& in, Data& out);
-        static QByteArray Decrypt(const Data& keyAndIv, const Data& data);
+        static Data Decrypt(const Data& keyAndIv, const Data& data);
 
         const Data& GetKeyAndIv() const;
 

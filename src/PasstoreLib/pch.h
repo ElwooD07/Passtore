@@ -14,5 +14,3 @@
 #define VER_MAJOR 0
 #define VER_MINOR 1
 #define PRODUCT_NAME "Elwood's Passtore"
-
-#define USE_QT

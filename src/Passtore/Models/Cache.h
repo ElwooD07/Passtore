@@ -1,4 +1,7 @@
 #pragma once
+#include <map>
+#include <chrono>
+#include <cassert>
 
 namespace passtore
 {
@@ -16,14 +19,17 @@ namespace passtore
 
         T* Get(const K& key)
         {
-            if (!m_data.contains(key))
+            auto found = m_data.find(key);
+            if (found == m_data.end())
             {
                 return nullptr;
             }
 
-            m_lastUsed[QDateTime::currentMSecsSinceEpoch()] = key;
+            uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count();
+            m_lastUsed[now] = key;
 
-            return &m_data[key];
+            return &found->second;
         }
 
         T& Set(const K& key, const T& obj)
@@ -53,14 +59,16 @@ namespace passtore
             auto candidate = m_lastUsed.begin();
             if (candidate == m_lastUsed.end())
             {
-                return m_data.begin().key();
+                return m_data.begin()->first;
             }
-            return *candidate;
+            K key = candidate->second;
+            m_lastUsed.erase(candidate);
+            return key;
         }
 
     private:
         const size_t m_capacity;
-        QMap<K, T> m_data;
-        QMap<quint64, K> m_lastUsed;
+        std::map<K, T> m_data;
+        std::map<uint64_t, K> m_lastUsed;
     };
 }

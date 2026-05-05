@@ -1,25 +1,28 @@
 #pragma once
-#include <QMainWindow>
-#include "ui_MainWindow.h"
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Button.H>
 #include "Storages/IResourceStorage.h"
-
-namespace Ui {
-    class MainWindow;
-}
 
 namespace passtore
 {
-    class MainWindow : public QMainWindow
+    class ResourceTableModel;
+    class ResourcesListWidget;
+
+    class MainWindow : public Fl_Window
     {
-        Q_OBJECT
-
     public:
-        explicit MainWindow(QWidget* parent, IResourceStorage* database);
-
-    public slots:
-        void OnErrorOccurred(const QString& message);
+        explicit MainWindow(IResourceStorage* storage);
 
     private:
-        Ui::MainWindow m_ui;
+        static void onError(void* ctx, const std::string& message);
+        static void onSettings(Fl_Widget*, void* ctx);
+        static void onAdd(Fl_Widget*, void* ctx);
+        static void onDelete(Fl_Widget*, void* ctx);
+
+    private:
+        IResourceStorage*    m_storage;
+        ResourceTableModel*  m_model;
+        ResourcesListWidget* m_table;
     };
 }

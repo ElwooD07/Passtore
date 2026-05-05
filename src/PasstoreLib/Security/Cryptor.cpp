@@ -52,28 +52,19 @@ void Cryptor::Encrypt(const std::string_view& in, Data& out)
     Encrypt(m_keyAndIv, in, out);
 }
 
-void Cryptor::Encrypt(const QString& in, Data& out)
-{
-    CheckKeys();
-    Encrypt(m_keyAndIv, in.toUtf8().constData(), out);
-}
-
 void Cryptor::Encrypt(const Data& in, Data& out)
 {
     CheckKeys();
     Encrypt(m_keyAndIv, in, out);
 }
 
-QString Cryptor::DecryptAsQString(const Data& data)
-{
-    CheckKeys();
-    return QString::fromUtf8(Decrypt(m_keyAndIv, data).constData());
-}
-
 std::string Cryptor::DecryptAsStdString(const Data& data)
 {
     CheckKeys();
-    return Decrypt(m_keyAndIv, data).constData();
+    Data result = Decrypt(m_keyAndIv, data);
+    std::string str(reinterpret_cast<const char*>(result.data()));
+    memset(result.data(), 0, result.size());
+    return str;
 }
 
 void Cryptor::Encrypt(const Data& keyAndIv, const std::string_view& in, Data& out)
@@ -114,7 +105,7 @@ void Cryptor::Encrypt(const Data& keyAndIv, const Data& in, Data& out)
     AES_CBC_encrypt_buffer(&ctx, out.data(), static_cast<uint32_t>(out.size()));
 }
 
-QByteArray Cryptor::Decrypt(const Data& keyAndIv, const Data& data)
+Data Cryptor::Decrypt(const Data& keyAndIv, const Data& data)
 {
     assert(AES_KEYLEN * 2 == keyAndIv.size());
 
@@ -122,14 +113,14 @@ QByteArray Cryptor::Decrypt(const Data& keyAndIv, const Data& data)
     auto keyData = reinterpret_cast<const uint8_t*>(keyAndIv.data());
     AES_init_ctx_iv(&ctx, keyData, keyData + AES_KEYLEN);
 
-    QByteArray result(reinterpret_cast<const char*>(data.data()), data.size());
+    Data result(data.begin(), data.end());
     auto blockModulus = PowerOf2FastModulus(data.size(), AES_BLOCKLEN);
     if (blockModulus != 0)
     {
         auto paddingSize = AES_BLOCKLEN - blockModulus;
         result.resize(data.size() + paddingSize);
     }
-    AES_CBC_decrypt_buffer(&ctx, reinterpret_cast<uint8_t*>(result.data()), result.size());
+    AES_CBC_decrypt_buffer(&ctx, result.data(), static_cast<uint32_t>(result.size()));
     return result;
 }
 

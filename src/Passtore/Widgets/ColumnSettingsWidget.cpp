@@ -3,16 +3,28 @@
 
 using namespace passtore;
 
-ColumnSettingsWidget::ColumnSettingsWidget(QWidget* parent, ColumnSettings sets)
-    : QWidget(parent)
+static const int ROW_H = 32;
+
+ColumnSettingsWidget::ColumnSettingsWidget(int x, int y, int w, const ColumnSettings& sets)
+    : Fl_Group(x, y, w, ROW_H)
+    , m_name(sets.name)
 {
-    m_ui.setupUi(this);
-    m_ui.lblName->setText(sets.name);
-    m_ui.chkVisible->setChecked(sets.visible);
-    m_ui.chkBlured->setChecked(sets.blured);
+    begin();
+    int nameW = w / 2;
+    m_lblName = new Fl_Box(x + 6, y + 4, nameW - 12, 24, m_name.c_str());
+    m_lblName->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+
+    m_chkVisible = new Fl_Check_Button(x + nameW, y + 4, 80, 24, "Visible");
+    m_chkVisible->value(sets.visible ? 1 : 0);
+
+    m_chkBlured = new Fl_Check_Button(x + nameW + 86, y + 4, 80, 24, "Blured");
+    m_chkBlured->value(sets.blured ? 1 : 0);
+    end();
+
+    box(FL_FLAT_BOX);
 }
 
 ColumnSettings ColumnSettingsWidget::getSets() const
 {
-    return ColumnSettings { m_ui.lblName->text(), m_ui.chkVisible->isChecked(), m_ui.chkBlured->isChecked() };
+    return ColumnSettings{ m_name, m_chkVisible->value() != 0, m_chkBlured->value() != 0 };
 }

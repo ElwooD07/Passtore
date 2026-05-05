@@ -1,17 +1,18 @@
 #pragma once
-#include <QVector>
+#include <string>
+#include <vector>
 
 namespace passtore
 {
     struct ColumnSettings
     {
-        QString name;
+        std::string name;
         bool visible = false;
         bool blured = false;
     };
 
     struct TableSettings
     {
-        QVector<ColumnSettings> columns;
+        std::vector<ColumnSettings> columns;
     };
 }

@@ -1,19 +1,27 @@
 #pragma once
-#include "ui_SettingsDialog.h"
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Scroll.H>
+#include <FL/Fl_Tabs.H>
+#include <FL/Fl_Group.H>
+#include <vector>
 #include "Settings.h"
 #include "Storages/IResourceStorage.h"
+#include "Widgets/ColumnSettingsWidget.h"
 
 namespace passtore
 {
-    class SettingsDialog : public QDialog
+    class SettingsDialog : public Fl_Window
     {
     public:
-        SettingsDialog(QWidget* parent, const ResourcesDefinition& defs);
-
+        explicit SettingsDialog(const ResourcesDefinition& defs);
         TableSettings getTableSettings() const;
 
     private:
-        Ui::SettingsDialog m_ui;
-        size_t m_columnsCount;
+        static void onSave(Fl_Widget*, void* ctx);
+        static void onClose(Fl_Widget*, void* ctx);
+
+    private:
+        std::vector<ColumnSettingsWidget*> m_columnWidgets;
     };
 }
