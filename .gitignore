@@ -1,1 +1,10 @@
 build/
+
+# External libraries (not owned by this project)
+ext/fltk/
+ext/TinyAES/
+
+# IDE / tool artifacts
+.claude/
+.vscode/
+*.pro.user
