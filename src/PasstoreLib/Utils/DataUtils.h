@@ -1,8 +1,12 @@
 #pragma once
+#include <cstdint>
+#include <span>
+#include <vector>
 
 namespace passtore
 {
     using Data = std::vector<uint8_t>;
+    using Secret = std::span<const uint8_t>;
 
     namespace utils
     {

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Storages/Marshaling.h"
+#include "Security/SecureMemory.h"
 #include "Storages/SQLite/SQLiteDatabase.h"
 #include "Utils/DataUtils.h"
 
@@ -8,6 +9,11 @@ using namespace passtore;
 namespace
 {
     const std::string s_phraseDecryptedExpected = PRODUCT_NAME + std::to_string(VER_MAJOR);
+
+    Secret ToBytes(std::string_view text)
+    {
+        return Secret(reinterpret_cast<const uint8_t*>(text.data()), text.size());
+    }
 }
 
 sqlite::SQLiteDatabase::SQLiteDatabase()
@@ -34,10 +40,11 @@ void sqlite::SQLiteDatabase::ChangePassword(const std::string& oldPassword, cons
 {
     // TODO: read phrase and check old password
     Data passwordData(newPassword.begin(), newPassword.end());
-    Cryptor passwordCryptor(utils::Sha256Calculate(passwordData.data(), passwordData.size()));
+    Data passwordHash = utils::Sha256Calculate(passwordData.data(), passwordData.size());
+    Cryptor passwordCryptor(Secret(passwordHash.data(), passwordHash.size()));
 
     Data newPhrase;
-    passwordCryptor.Encrypt(s_phraseDecryptedExpected, newPhrase);
+    passwordCryptor.Encrypt(ToBytes(s_phraseDecryptedExpected), newPhrase);
     Data newKeys;
     passwordCryptor.Encrypt(m_cryptor.GetKeyAndIv(), newKeys);
 
@@ -55,7 +62,10 @@ void sqlite::SQLiteDatabase::ChangePassword(const std::string& oldPassword, cons
 
     transaction.Commit();
 
-    m_cryptor.SetKeyAndIv(newKeys);
+    m_cryptor.SetKeyAndIv(Secret(newKeys.data(), newKeys.size()));
+    SecureWipe(passwordData.data(), passwordData.size());
+    SecureWipe(passwordHash.data(), passwordHash.size());
+    SecureWipe(newKeys.data(), newKeys.size());
 }
 
 ResourceState sqlite::SQLiteDatabase::GetOne(ResourceId id, Resource& resource)
@@ -72,7 +82,9 @@ ResourceState sqlite::SQLiteDatabase::GetOne(ResourceId id, Resource& resource)
     resource.id = id;
     Data encryptedData;
     query.ColumnBlob(0, encryptedData);
-    UnmarshalResourceFromJSON(m_cryptor.DecryptAsStdString(encryptedData), resource);
+    SensitiveData decrypted;
+    m_cryptor.Decrypt(encryptedData, decrypted);
+    UnmarshalResourceFromJSON(decrypted.View(), resource);
 
     return ResourceState::Present;
 }
@@ -96,7 +108,9 @@ ResourceState sqlite::SQLiteDatabase::GetNext(ResourceId id, Resource& resource)
     resource.id = query.ColumnInt(0);
     Data encryptedData;
     query.ColumnBlob(1, encryptedData);
-    UnmarshalResourceFromJSON(m_cryptor.DecryptAsStdString(encryptedData), resource);
+    SensitiveData decrypted;
+    m_cryptor.Decrypt(encryptedData, decrypted);
+    UnmarshalResourceFromJSON(decrypted.View(), resource);
 
     return ResourceState::Present;
 }
@@ -105,7 +119,8 @@ ResourceId sqlite::SQLiteDatabase::Upsert(const Resource& resource)
 {
     auto json = MarshalResourceToJSON(resource);
     Data encrypted;
-    m_cryptor.Encrypt(json, encrypted);
+    m_cryptor.Encrypt(ToBytes(json), encrypted);
+    SecureWipe(json.data(), json.size());
 
     auto query = m_db.CreateQuery();
     if (resource.id == InvalidResourceId)
@@ -166,7 +181,8 @@ void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
 {
     Data keys;
     Cryptor::GenerateRandomKeyAndIv(keys);
-    m_cryptor.SetKeyAndIv(std::move(keys));
+    m_cryptor.SetKeyAndIv(Secret(keys.data(), keys.size()));
+    SecureWipe(keys.data(), keys.size());
 
     ChangePassword("", password);
 
@@ -190,11 +206,25 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
     Data encryptedKeys;
     query.ColumnBlob(2, encryptedKeys);
 
-    Cryptor passwordCryptor(utils::Sha256Calculate(password.data(), password.size()));
-    std::string phraseDecrypted = passwordCryptor.DecryptAsStdString(phrase);
-    if (phraseDecrypted != s_phraseDecryptedExpected)
+    Data passwordHash = utils::Sha256Calculate(password.data(), password.size());
+    Cryptor passwordCryptor(Secret(passwordHash.data(), passwordHash.size()));
+    SensitiveData phraseDecrypted;
+    passwordCryptor.Decrypt(phrase, phraseDecrypted);
+
+    auto expected = ToBytes(s_phraseDecryptedExpected);
+    auto decrypted = phraseDecrypted.View();
+    size_t decryptedLen = 0;
+    while (decryptedLen < decrypted.size() && decrypted[decryptedLen] != '\0')
+    {
+        ++decryptedLen;
+    }
+
+    if (decryptedLen != expected.size() || memcmp(decrypted.data(), expected.data(), expected.size()) != 0)
     {
         throw std::runtime_error("Invalid password");
     }
-    m_cryptor.SetKeyAndIv(std::move(encryptedKeys));
+
+    m_cryptor.SetKeyAndIv(Secret(encryptedKeys.data(), encryptedKeys.size()));
+    SecureWipe(passwordHash.data(), passwordHash.size());
+    SecureWipe(encryptedKeys.data(), encryptedKeys.size());
 }

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Cryptor.h"
+#include "Security/SecureMemory.h"
 #include "aes.hpp"
 
 using namespace passtore;
@@ -18,99 +19,58 @@ passtore::Cryptor::Cryptor()
 
 passtore::Cryptor::~Cryptor()
 {
-    // Avoid sudden keys leak to another process
-    memset(m_keyAndIv.data(), 0, m_keyAndIv.size());
+    // SensitiveData wipes key storage in its destructor.
 }
 
-Cryptor::Cryptor(const Data& keyAndIv)
-    : m_keyAndIv(keyAndIv)
-{
-    CheckKeys();
-}
-
-passtore::Cryptor::Cryptor(Data&& keyAndIv)
-    : m_keyAndIv(std::move(keyAndIv))
-{
-    CheckKeys();
-}
-
-void Cryptor::SetKeyAndIv(const Data& keyAndIv)
+Cryptor::Cryptor(Secret keyAndIv)
 {
     CheckKeys(keyAndIv);
-    m_keyAndIv = keyAndIv;
+    m_keyAndIv.Assign(keyAndIv);
 }
 
-void passtore::Cryptor::SetKeyAndIv(Data&& keyAndIv)
+void passtore::Cryptor::SetKeyAndIv(Secret keyAndIv)
 {
     CheckKeys(keyAndIv);
-    m_keyAndIv = std::move(keyAndIv);
+    m_keyAndIv.Assign(keyAndIv);
 }
 
-void Cryptor::Encrypt(const std::string_view& in, Data& out)
+void Cryptor::Encrypt(Secret in, Data& out)
 {
     CheckKeys();
-    Encrypt(m_keyAndIv, in, out);
+    Encrypt(m_keyAndIv.View(), in, out);
 }
 
-void Cryptor::Encrypt(const Data& in, Data& out)
+void Cryptor::Decrypt(const Data& data, SensitiveData& out)
 {
     CheckKeys();
-    Encrypt(m_keyAndIv, in, out);
+    Decrypt(m_keyAndIv.View(), data, out);
 }
 
-std::string Cryptor::DecryptAsStdString(const Data& data)
-{
-    CheckKeys();
-    Data result = Decrypt(m_keyAndIv, data);
-    std::string str(reinterpret_cast<const char*>(result.data()));
-    memset(result.data(), 0, result.size());
-    return str;
-}
-
-void Cryptor::Encrypt(const Data& keyAndIv, const std::string_view& in, Data& out)
+void Cryptor::Encrypt(Secret keyAndIv, Secret in, Data& out)
 {
     assert(AES_KEYLEN * 2 == keyAndIv.size());
 
     AES_ctx ctx { };
-    auto keyData = reinterpret_cast<const uint8_t*>(keyAndIv.data());
+    auto keyData = keyAndIv.data();
     AES_init_ctx_iv(&ctx, keyData, keyData + AES_KEYLEN);
 
-    out.resize(in.size() + 1);
-    memcpy(&out[0], in.data(), in.size());
-    out[out.size() - 1] = '\0';
-    auto blockModulus = PowerOf2FastModulus(in.size() + 1, AES_BLOCKLEN);
+    out.assign(in.begin(), in.end());
+    out.push_back('\0');
+    auto blockModulus = PowerOf2FastModulus(out.size(), AES_BLOCKLEN);
     if (blockModulus != 0)
     {
         auto paddingSize = AES_BLOCKLEN - blockModulus;
-        out.resize(in.size() + 1 + paddingSize);
+        out.resize(out.size() + paddingSize);
     }
     AES_CBC_encrypt_buffer(&ctx, out.data(), static_cast<uint32_t>(out.size()));
 }
 
-void Cryptor::Encrypt(const Data& keyAndIv, const Data& in, Data& out)
+void Cryptor::Decrypt(Secret keyAndIv, const Data& data, SensitiveData& out)
 {
     assert(AES_KEYLEN * 2 == keyAndIv.size());
 
     AES_ctx ctx { };
-    auto keyData = reinterpret_cast<const uint8_t*>(keyAndIv.data());
-    AES_init_ctx_iv(&ctx, keyData, keyData + AES_KEYLEN);
-
-    out = in;
-    auto blockModulus = PowerOf2FastModulus(in.size(), AES_BLOCKLEN);
-    if (blockModulus != 0)
-    {
-        auto paddingSize = AES_BLOCKLEN - blockModulus;
-        out.resize(in.size() + paddingSize);
-    }
-    AES_CBC_encrypt_buffer(&ctx, out.data(), static_cast<uint32_t>(out.size()));
-}
-
-Data Cryptor::Decrypt(const Data& keyAndIv, const Data& data)
-{
-    assert(AES_KEYLEN * 2 == keyAndIv.size());
-
-    AES_ctx ctx { };
-    auto keyData = reinterpret_cast<const uint8_t*>(keyAndIv.data());
+    auto keyData = keyAndIv.data();
     AES_init_ctx_iv(&ctx, keyData, keyData + AES_KEYLEN);
 
     Data result(data.begin(), data.end());
@@ -121,12 +81,13 @@ Data Cryptor::Decrypt(const Data& keyAndIv, const Data& data)
         result.resize(data.size() + paddingSize);
     }
     AES_CBC_decrypt_buffer(&ctx, result.data(), static_cast<uint32_t>(result.size()));
-    return result;
+    out.Assign(Secret(result.data(), result.size()));
+    SecureWipe(result.data(), result.size());
 }
 
-const passtore::Data& passtore::Cryptor::GetKeyAndIv() const
+Secret passtore::Cryptor::GetKeyAndIv() const
 {
-    return m_keyAndIv;
+    return m_keyAndIv.View();
 }
 
 void passtore::Cryptor::GenerateRandomKeyAndIv(Data& data)
@@ -134,7 +95,7 @@ void passtore::Cryptor::GenerateRandomKeyAndIv(Data& data)
     GenerateRandomSequence(AES_KEYLEN * 2, data);
 }
 
-void passtore::Cryptor::CheckKeys(const Data& keyAndIv)
+void passtore::Cryptor::CheckKeys(Secret keyAndIv)
 {
     if (keyAndIv.size() != AES_KEYLEN * 2)
     {
@@ -144,14 +105,14 @@ void passtore::Cryptor::CheckKeys(const Data& keyAndIv)
 
 void passtore::Cryptor::CheckKeys() const
 {
-    CheckKeys(m_keyAndIv);
+    CheckKeys(m_keyAndIv.View());
 }
 
 void passtore::GenerateRandomSequence(size_t sequenceLen, Data& data)
 {
     data.resize(sequenceLen);
     std::random_device rnd;
-    for (auto i = 0; i < sequenceLen--; ++i)
+    for (size_t i = 0; i < sequenceLen; ++i)
     {
         data[i] = static_cast<uint8_t>(PowerOf2FastModulus(rnd(), 256));
     }

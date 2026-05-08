@@ -16,6 +16,7 @@ set(PASSTORELIB_SOURCES
 
 set(PASSTORELIB_HEADERS
     Security/Cryptor.h
+    Security/SecureMemory.h
     Security/SensitiveData.h
     Storages/IResourceStorage.h
     Storages/Marshaling.h

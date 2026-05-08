@@ -1,6 +1,10 @@
 #pragma once
 #include <vector>
 #include <stdint.h>
+#include <span>
+#include <string_view>
+#include "Security/SecureMemory.h"
+#include "Utils/DataUtils.h"
 
 namespace passtore
 {
@@ -9,56 +13,104 @@ namespace passtore
     public:
         using DataType = std::vector<uint8_t>;
 
-        template<class T>
-        SensitiveData(T&& data)
+        SensitiveData() = default;
+
+        explicit SensitiveData(Secret data)
         {
-            Take(std::move(data));
+            Assign(data);
+        }
+
+        explicit SensitiveData(std::string_view text)
+        {
+            Assign(text);
+        }
+
+        SensitiveData(const SensitiveData&) = delete;
+        SensitiveData& operator=(const SensitiveData&) = delete;
+
+        SensitiveData(SensitiveData&& other) noexcept
+            : m_data(std::move(other.m_data))
+            , m_isLocked(other.m_isLocked)
+        {
+            other.m_isLocked = false;
+        }
+
+        SensitiveData& operator=(SensitiveData&& other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            WipeAndRelease();
+            m_data = std::move(other.m_data);
+            m_isLocked = other.m_isLocked;
+            other.m_isLocked = false;
+            return *this;
         }
 
         ~SensitiveData()
         {
-            ClearContainer(m_data);
+            WipeAndRelease();
         }
 
-        void Take(DataType&& data)
+        void Assign(Secret data)
         {
+            WipeAndRelease();
             m_data.assign(data.begin(), data.end());
-            ClearContainer(data);
+            m_isLocked = TryLockMemory(m_data.data(), m_data.size());
         }
 
-        void Take(std::string&& text)
+        void Assign(std::string_view text)
         {
-            m_data.assign(text.begin(), text.end());
-            ClearContainer(text);
+            Assign(Secret(reinterpret_cast<const uint8_t*>(text.data()), text.size()));
         }
 
-        void Take(const uint8_t* data, size_t size)
+        void Assign(const uint8_t* data, size_t size)
         {
-            m_data.assign(data, data + size);
+            Assign(Secret(data, size));
         }
 
-        void Take(const char* text)
+        void Assign(const char* text)
         {
-            m_data.assign(text, text + strlen(text));
+            Assign(std::string_view(text));
         }
 
-        template<class Container>
-        static void ClearContainer(Container& cont)
+        void Wipe() noexcept
         {
-            memset(cont.data(), 0, cont.size());
+            SecureWipe(m_data.data(), m_data.size());
         }
 
-        const DataType& operator()() const
+        Secret View() const noexcept
         {
-            return m_data;
+            return Secret(m_data.data(), m_data.size());
         }
 
-        const DataType& AsVector() const
+        std::span<uint8_t> MutableView() noexcept
+        {
+            return std::span<uint8_t>(m_data.data(), m_data.size());
+        }
+
+        const DataType& AsVector() const noexcept
         {
             return m_data;
         }
 
     private:
+        void WipeAndRelease() noexcept
+        {
+            Wipe();
+            if (m_isLocked)
+            {
+                UnlockMemory(m_data.data(), m_data.size());
+            }
+            m_data.clear();
+            m_data.shrink_to_fit();
+            m_isLocked = false;
+        }
+
+    private:
         DataType m_data;
+        bool m_isLocked = false;
     };
 }

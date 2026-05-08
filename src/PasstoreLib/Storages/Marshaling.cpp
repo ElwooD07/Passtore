@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Marshaling.h"
+#include "Security/SecureMemory.h"
 #include "json.hpp"
 
 using namespace passtore;
@@ -56,4 +57,21 @@ void passtore::UnmarshalResourceFromJSON(const std::string& data, Resource& reso
     json::JSON document = json::JSON::Load(data);
     resource.subject = document["subject"].ToString();
     UnmarshalValuesRecursively(document["values"], resource.values);
+}
+
+void passtore::UnmarshalResourceFromJSON(Secret data, Resource& resource)
+{
+    size_t effectiveSize = data.size();
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        if (data[i] == '\0')
+        {
+            effectiveSize = i;
+            break;
+        }
+    }
+
+    std::string jsonText(reinterpret_cast<const char*>(data.data()), effectiveSize);
+    UnmarshalResourceFromJSON(jsonText, resource);
+    SecureWipe(jsonText.data(), jsonText.size());
 }

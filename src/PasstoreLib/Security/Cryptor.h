@@ -1,7 +1,8 @@
 #pragma once
-#include <string>
 #include <vector>
+#include <span>
 #include "Utils/DataUtils.h"
+#include "Security/SensitiveData.h"
 
 // TODO: TEST IT!
 
@@ -16,32 +17,27 @@ namespace passtore
     public:
         Cryptor();
         ~Cryptor();
-        explicit Cryptor(const Data& keyAndIv);
-        explicit Cryptor(Data&& keyAndIv);
+        explicit Cryptor(Secret keyAndIv);
 
-        void SetKeyAndIv(const Data& keyAndIv);
-        void SetKeyAndIv(Data&& keyAndIv);
+        void SetKeyAndIv(Secret keyAndIv);
 
         // Methods are virtual for decorators
-        virtual void Encrypt(const std::string_view& in, Data& out);
-        virtual void Encrypt(const Data& in, Data& out);
+        virtual void Encrypt(Secret in, Data& out);
+        virtual void Decrypt(const Data& data, SensitiveData& out);
 
-        virtual std::string DecryptAsStdString(const Data& data);
+        static void Encrypt(Secret keyAndIv, Secret in, Data& out);
+        static void Decrypt(Secret keyAndIv, const Data& data, SensitiveData& out);
 
-        static void Encrypt(const Data& keyAndIv, const std::string_view& in, Data& out);
-        static void Encrypt(const Data& keyAndIv, const Data& in, Data& out);
-        static Data Decrypt(const Data& keyAndIv, const Data& data);
-
-        const Data& GetKeyAndIv() const;
+        Secret GetKeyAndIv() const;
 
         static void GenerateRandomKeyAndIv(Data& data);
 
     private:
-        static void CheckKeys(const Data& keyAndIv);
+        static void CheckKeys(Secret keyAndIv);
         void CheckKeys() const;
 
     private:
-        Data m_keyAndIv;
+        SensitiveData m_keyAndIv;
     };
 
     void GenerateRandomSequence(size_t sequenceLen, Data& data);

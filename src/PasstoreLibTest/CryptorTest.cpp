@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Security/Cryptor.h"
+#include "Security/SensitiveData.h"
 
 using namespace passtore;
 
@@ -7,35 +8,29 @@ Cryptor CreateCryptor()
 {
     Data keys;
     Cryptor::GenerateRandomKeyAndIv(keys);
-    return Cryptor(std::move(keys));
+    return Cryptor(Secret(keys.data(), keys.size()));
 }
 
-TEST(CryptorTest, EncryptDecryptToStdStringTest)
+TEST(CryptorTest, EncryptDecryptToSensitiveDataTest)
 {
     auto cryptor = CreateCryptor();
-    std::string phrase("TestString");
+    const std::string phrase("TestString");
+    const auto phraseBytes = Secret(reinterpret_cast<const uint8_t*>(phrase.data()), phrase.size());
 
     Data encrypted;
-    EXPECT_NO_THROW(cryptor.Encrypt(phrase, encrypted));
+    EXPECT_NO_THROW(cryptor.Encrypt(phraseBytes, encrypted));
     ASSERT_FALSE(encrypted.empty());
     ASSERT_NE(0, memcmp(phrase.data(), encrypted.data(), std::min(phrase.size(), encrypted.size())));
 
-    auto decrypted = cryptor.DecryptAsStdString(encrypted);
-    ASSERT_EQ(phrase.size(), decrypted.size());
-    EXPECT_STREQ(phrase.c_str(), decrypted.c_str());
-}
+    SensitiveData decrypted;
+    EXPECT_NO_THROW(cryptor.Decrypt(encrypted, decrypted));
+    auto decryptedView = decrypted.View();
+    size_t decryptedLen = 0;
+    while (decryptedLen < decryptedView.size() && decryptedView[decryptedLen] != '\0')
+    {
+        ++decryptedLen;
+    }
 
-TEST(CryptorTest, EncryptDecryptToQStringTest)
-{
-    auto cryptor = CreateCryptor();
-    std::string phrase("TestString");
-
-    Data encrypted;
-    EXPECT_NO_THROW(cryptor.Encrypt(phrase, encrypted));
-    ASSERT_FALSE(encrypted.empty());
-    ASSERT_NE(0, memcmp(phrase.data(), encrypted.data(), std::min(phrase.size(), encrypted.size())));
-
-    auto decrypted = cryptor.DecryptAsQString(encrypted);
-    ASSERT_EQ(phrase.size(), decrypted.size());
-    EXPECT_STREQ(phrase.c_str(), decrypted.toUtf8().constData());
+    ASSERT_EQ(phrase.size(), decryptedLen);
+    EXPECT_EQ(0, memcmp(phrase.data(), decryptedView.data(), phrase.size()));
 }
