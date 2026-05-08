@@ -14,41 +14,9 @@ namespace
     }
 }
 
-passtore::Cryptor::Cryptor()
-{ }
-
-passtore::Cryptor::~Cryptor()
-{
-    // SensitiveData wipes key storage in its destructor.
-}
-
-Cryptor::Cryptor(Secret keyAndIv)
-{
-    CheckKeys(keyAndIv);
-    m_keyAndIv.Assign(keyAndIv);
-}
-
-void passtore::Cryptor::SetKeyAndIv(Secret keyAndIv)
-{
-    CheckKeys(keyAndIv);
-    m_keyAndIv.Assign(keyAndIv);
-}
-
-void Cryptor::Encrypt(Secret in, Data& out)
-{
-    CheckKeys();
-    Encrypt(m_keyAndIv.View(), in, out);
-}
-
-void Cryptor::Decrypt(const Data& data, SensitiveData& out)
-{
-    CheckKeys();
-    Decrypt(m_keyAndIv.View(), data, out);
-}
-
 void Cryptor::Encrypt(Secret keyAndIv, Secret in, Data& out)
 {
-    assert(AES_KEYLEN * 2 == keyAndIv.size());
+    CheckKeys(keyAndIv);
 
     AES_ctx ctx { };
     auto keyData = keyAndIv.data();
@@ -67,7 +35,7 @@ void Cryptor::Encrypt(Secret keyAndIv, Secret in, Data& out)
 
 void Cryptor::Decrypt(Secret keyAndIv, const Data& data, SensitiveData& out)
 {
-    assert(AES_KEYLEN * 2 == keyAndIv.size());
+    CheckKeys(keyAndIv);
 
     AES_ctx ctx { };
     auto keyData = keyAndIv.data();
@@ -85,11 +53,6 @@ void Cryptor::Decrypt(Secret keyAndIv, const Data& data, SensitiveData& out)
     SecureWipe(result.data(), result.size());
 }
 
-Secret passtore::Cryptor::GetKeyAndIv() const
-{
-    return m_keyAndIv.View();
-}
-
 void passtore::Cryptor::GenerateRandomKeyAndIv(Data& data)
 {
     GenerateRandomSequence(AES_KEYLEN * 2, data);
@@ -101,11 +64,6 @@ void passtore::Cryptor::CheckKeys(Secret keyAndIv)
     {
         throw std::runtime_error("Cryptor is not initialized with proper AES keys");
     }
-}
-
-void passtore::Cryptor::CheckKeys() const
-{
-    CheckKeys(m_keyAndIv.View());
 }
 
 void passtore::GenerateRandomSequence(size_t sequenceLen, Data& data)

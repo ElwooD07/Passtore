@@ -11,33 +11,16 @@ namespace passtore
     // Uses AES 256 in CBC mode to encrypt/decrypt data and targeted on crypting strings,
     // so the end of decrypted message is determined by null symbol
     // It uses the pair of AES KEY and IV placed in the single container consecutively
-    // You can use it as implementation or base class for your specific cryptor
     class Cryptor
     {
     public:
-        Cryptor();
-        ~Cryptor();
-        explicit Cryptor(Secret keyAndIv);
-
-        void SetKeyAndIv(Secret keyAndIv);
-
-        // Methods are virtual for decorators
-        virtual void Encrypt(Secret in, Data& out);
-        virtual void Decrypt(const Data& data, SensitiveData& out);
-
         static void Encrypt(Secret keyAndIv, Secret in, Data& out);
         static void Decrypt(Secret keyAndIv, const Data& data, SensitiveData& out);
-
-        Secret GetKeyAndIv() const;
 
         static void GenerateRandomKeyAndIv(Data& data);
 
     private:
         static void CheckKeys(Secret keyAndIv);
-        void CheckKeys() const;
-
-    private:
-        SensitiveData m_keyAndIv;
     };
 
     void GenerateRandomSequence(size_t sequenceLen, Data& data);

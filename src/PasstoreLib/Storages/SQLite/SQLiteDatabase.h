@@ -1,5 +1,5 @@
 #pragma once
-#include "Security/Cryptor.h"
+#include "Security/SensitiveData.h"
 #include "Storages/IResourceStorage.h"
 #include "Storages/SQLite/Connection.h"
 
@@ -31,7 +31,7 @@ namespace passtore
 
         private:
             Connection m_db;
-            Cryptor m_cryptor;
+            SensitiveData m_key;
         };
     }
 }
