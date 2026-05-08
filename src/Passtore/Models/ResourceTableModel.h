@@ -25,10 +25,12 @@ namespace passtore
 
     private:
         Resource* GetResource(int row) const;
+        void RefreshIds();
 
     private:
         IResourceStorage* m_storage = nullptr;
         ResourcesDefinition m_resourcesDefs;
+        std::vector<ResourceId> m_ids;
         mutable Cache<int, Resource> m_cache;
         ErrorCallback m_errorCb = nullptr;
         void* m_errorCtx = nullptr;

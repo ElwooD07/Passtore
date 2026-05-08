@@ -53,6 +53,12 @@ namespace passtore
             }
         }
 
+        void Clear()
+        {
+            m_data.clear();
+            m_lastUsed.clear();
+        }
+
     private:
         K takeLastUsed()
         {

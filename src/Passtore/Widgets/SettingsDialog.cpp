@@ -24,8 +24,7 @@ SettingsDialog::SettingsDialog(const ResourcesDefinition& defs)
             tabTable->begin();
             auto* scroll = new Fl_Scroll(10, TAB_TOP + 5, DLG_W - 20, dlgH - BTN_H - 30 - TAB_TOP - 10);
             scroll->begin();
-            for (size_t i = 0; i < defs.size(); ++i)
-            {
+            for (size_t i = 0; i < defs.size(); ++i) {
                 ColumnSettings cs{ defs[i].name, true, false };
                 auto* w = new ColumnSettingsWidget(10, TAB_TOP + 5 + static_cast<int>(i) * ROW_H, DLG_W - 36, cs);
                 m_columnWidgets.push_back(w);

@@ -58,8 +58,11 @@ public:
 
     int selectedRow()
     {
-        for (int r = 0; r < rows(); ++r)
-            if (row_selected(r)) return r;
+        for (int r = 0; r < rows(); ++r) {
+            if (row_selected(r)) {
+                return r;
+            }
+        }
         return -1;
     }
 
@@ -85,7 +88,9 @@ protected:
             return;
 
         case CONTEXT_CELL:
-            if (R == m_editRow && C == m_editCol) return;
+            if (R == m_editRow && C == m_editCol) {
+                return;
+            }
             fl_push_clip(X, Y, W, H);
             {
                 Fl_Color bg = row_selected(R) ? selection_color() : FL_WHITE;
@@ -138,11 +143,12 @@ protected:
             break;
 
         case FL_KEYDOWN:
-            if (m_editRow >= 0)
-            {
-                if (Fl::event_key() == FL_Escape) { cancelEdit(); return 1; }
-                if (Fl::event_key() == FL_Enter && m_model && !m_model->isBigColumn(m_editCol))
-                {
+            if (m_editRow >= 0) {
+                if (Fl::event_key() == FL_Escape) {
+                    cancelEdit();
+                    return 1;
+                }
+                if (Fl::event_key() == FL_Enter && m_model && !m_model->isBigColumn(m_editCol)) {
                     commitEdit();
                     return 1;
                 }
@@ -156,7 +162,9 @@ protected:
 private:
     void startEditing(int row, int col, int x, int y, int w, int h)
     {
-        if (m_editRow >= 0) commitEdit();
+        if (m_editRow >= 0) {
+            commitEdit();
+        }
         m_editRow = row;
         m_editCol = col;
 
@@ -182,7 +190,9 @@ private:
 
     void commitEdit()
     {
-        if (m_editRow < 0 || !m_model) return;
+        if (m_editRow < 0 || !m_model) {
+            return;
+        }
 
         bool big = m_model->isBigColumn(m_editCol);
         Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor)
@@ -201,7 +211,9 @@ private:
 
     void cancelEdit()
     {
-        if (m_editRow < 0) return;
+        if (m_editRow < 0) {
+            return;
+        }
 
         bool big = m_model && m_model->isBigColumn(m_editCol);
         Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor)
@@ -266,7 +278,9 @@ void ResourcesListWidget::onDelete(Fl_Widget*, void* ctx)
 {
     auto* self = static_cast<ResourcesListWidget*>(ctx);
     int row = self->m_tableWidget->selectedRow();
-    if (row < 0 || !self->m_model) return;
+    if (row < 0 || !self->m_model) {
+        return;
+    }
     self->m_model->deleteRow(row);
     self->m_tableWidget->refresh();
 }

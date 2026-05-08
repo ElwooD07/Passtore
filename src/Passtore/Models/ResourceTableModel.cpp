@@ -8,11 +8,12 @@ ResourceTableModel::ResourceTableModel(IResourceStorage* storage)
     , m_cache(1000)
 {
     m_resourcesDefs = storage->GetResourcesDefinition();
+    RefreshIds();
 }
 
 int ResourceTableModel::rowCount() const
 {
-    return static_cast<int>(m_storage->GetResourcesCount());
+    return static_cast<int>(m_ids.size());
 }
 
 int ResourceTableModel::columnCount() const
@@ -25,27 +26,32 @@ std::string ResourceTableModel::cellData(int row, int col) const
     try
     {
         auto* res = GetResource(row);
-        if (res && col < static_cast<int>(res->values.size()))
+        if (res && col < static_cast<int>(res->values.size())) {
             return res->values[col].value;
+        }
     }
     catch (const std::exception& ex)
     {
-        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+        if (m_errorCb) {
+            m_errorCb(m_errorCtx, ex.what());
+        }
     }
     return {};
 }
 
 bool ResourceTableModel::isBigColumn(int col) const
 {
-    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size()))
+    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
         return false;
+    }
     return m_resourcesDefs[col].big;
 }
 
 std::string ResourceTableModel::columnName(int col) const
 {
-    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size()))
+    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
         return {};
+    }
     return m_resourcesDefs[col].name;
 }
 
@@ -60,15 +66,21 @@ bool ResourceTableModel::setCellData(int row, int col, const std::string& value)
     try
     {
         auto* res = GetResource(row);
-        if (!res) return false;
-        if (col >= static_cast<int>(res->values.size())) return false;
+        if (!res) {
+            return false;
+        }
+        if (col >= static_cast<int>(res->values.size())) {
+            return false;
+        }
         res->values[col].value = value;
         m_storage->Upsert(*res);
         return true;
     }
     catch (const std::exception& ex)
     {
-        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+        if (m_errorCb) {
+            m_errorCb(m_errorCtx, ex.what());
+        }
     }
     return false;
 }
@@ -87,12 +99,17 @@ int ResourceTableModel::addRow()
         res.id = InvalidResourceId;
         res.subject = "New entry";
         res.values.resize(m_resourcesDefs.size());
-        m_storage->Upsert(res);
-        return rowCount() - 1;
+        ResourceId newId = m_storage->Upsert(res);
+        if (newId != InvalidResourceId) {
+            m_ids.push_back(newId);
+            return static_cast<int>(m_ids.size()) - 1;
+        }
     }
     catch (const std::exception& ex)
     {
-        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+        if (m_errorCb) {
+            m_errorCb(m_errorCtx, ex.what());
+        }
     }
     return -1;
 }
@@ -102,14 +119,19 @@ bool ResourceTableModel::deleteRow(int row)
     try
     {
         ResourceId id = rowId(row);
-        if (id == InvalidResourceId) return false;
+        if (id == InvalidResourceId) {
+            return false;
+        }
         m_storage->DeleteResource(id);
-        m_cache.Remove(row);
+        m_ids.erase(m_ids.begin() + row);
+        m_cache.Clear();
         return true;
     }
     catch (const std::exception& ex)
     {
-        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+        if (m_errorCb) {
+            m_errorCb(m_errorCtx, ex.what());
+        }
     }
     return false;
 }
@@ -125,14 +147,34 @@ Resource* ResourceTableModel::GetResource(int row) const
     try
     {
         auto* cached = m_cache.Get(row);
-        if (cached) return cached;
+        if (cached) {
+            return cached;
+        }
+        if (row < 0 || row >= static_cast<int>(m_ids.size())) {
+            return nullptr;
+        }
         Resource res;
-        m_storage->GetOne(static_cast<ResourceId>(row), res);
+        m_storage->GetOne(m_ids[row], res);
         return &m_cache.Set(row, res);
     }
     catch (const std::exception& ex)
     {
-        if (m_errorCb) m_errorCb(m_errorCtx, ex.what());
+        if (m_errorCb) {
+            m_errorCb(m_errorCtx, ex.what());
+        }
     }
     return nullptr;
+}
+
+void ResourceTableModel::RefreshIds()
+{
+    m_ids.clear();
+    m_cache.Clear();
+    Resource res;
+    ResourceId id = InvalidResourceId;
+    while (m_storage->GetNext(id, res) == ResourceState::Present)
+    {
+        m_ids.push_back(res.id);
+        id = res.id;
+    }
 }

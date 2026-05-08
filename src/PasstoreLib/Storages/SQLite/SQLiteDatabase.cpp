@@ -16,7 +16,7 @@ sqlite::SQLiteDatabase::SQLiteDatabase()
 void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::string& password)
 {
     auto buildNewDb = !std::filesystem::exists(path);
-    m_db.Reconnect(path);
+    m_db.Reconnect(path.string());
 
     if (buildNewDb)
     {

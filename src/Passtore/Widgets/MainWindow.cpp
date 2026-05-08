@@ -52,7 +52,9 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
     auto defs = self->m_storage->GetResourcesDefinition();
     SettingsDialog dlg(defs);
     dlg.show();
-    while (dlg.shown()) Fl::wait();
+    while (dlg.shown()) {
+        Fl::wait();
+    }
 }
 
 

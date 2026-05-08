@@ -12,10 +12,10 @@ namespace passtore
         {
         public:
             Connection();
-            Connection(const std::filesystem::path& dbPath);
+            Connection(const std::string& dbPath);
             ~Connection();
 
-            void Reconnect(const std::filesystem::path& dbPath);
+            void Reconnect(const std::string& dbPath);
             void Disconnect();
             sqlite3* Release() noexcept;
 
@@ -25,7 +25,7 @@ namespace passtore
             Transaction CreateTransaction();
 
         private:
-            void Connect(const std::filesystem::path& dbPath);
+            void Connect(const std::string& dbPath);
             void CheckDB();
 
         private:

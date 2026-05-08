@@ -6,8 +6,9 @@ using namespace passtore;
 
 static void SeedFakeData(IResourceStorage* storage)
 {
-    if (storage->GetResourcesCount() > 0)
+    if (storage->GetResourcesCount() > 0) {
         return;
+    }
 
     auto seed = [&](const char* name, const char* url, const char* login, const char* password, const char* notes)
     {
