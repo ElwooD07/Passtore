@@ -7,10 +7,10 @@
 
 using namespace passtore;
 
-static const int MENU_H = 25;
-static const int BTN_H  = 28;
-static const int WIN_W  = 722;
-static const int WIN_H  = 421;
+static const int MENU_H   = 25;
+static const int STATUS_H = 22;
+static const int WIN_W    = 722;
+static const int WIN_H    = 421;
 
 MainWindow::MainWindow(IResourceStorage* storage)
     : Fl_Window(WIN_W, WIN_H, PRODUCT_NAME)
@@ -23,24 +23,26 @@ MainWindow::MainWindow(IResourceStorage* storage)
     menu->add("File/Settings", 0, onSettings, this);
     menu->add("File/Exit",     0, [](Fl_Widget*, void*){ exit(0); }, nullptr);
 
-    int tableH = WIN_H - MENU_H - BTN_H - 6;
+    int listH = WIN_H - MENU_H - STATUS_H;
     m_model = new ResourceTableModel(storage);
     m_model->setErrorCallback(onError, this);
 
-    m_table = new ResourcesListWidget(0, MENU_H, WIN_W, tableH, m_model);
+    m_listWidget = new ResourcesListWidget(0, MENU_H, WIN_W, listH);
+    m_listWidget->setModel(m_model);
 
-    auto* btnDelete = new Fl_Button(0, MENU_H + tableH + 4, 80, BTN_H, "Delete");
-    btnDelete->callback(onDelete, this);
-
-    auto* btnAdd = new Fl_Button(WIN_W - 82, MENU_H + tableH + 4, 80, BTN_H, "Add");
-    btnAdd->callback(onAdd, this);
+    m_statusBar = new Fl_Box(0, MENU_H + listH, WIN_W, STATUS_H);
+    m_statusBar->box(FL_FLAT_BOX);
+    m_statusBar->color(FL_BACKGROUND_COLOR);
+    m_statusBar->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
 
     end();
-    resizable(m_table);
+    resizable(m_listWidget);
 }
 
-void MainWindow::onError(void* /*ctx*/, const std::string& message)
+void MainWindow::onError(void* ctx, const std::string& message)
 {
+    auto* self = static_cast<MainWindow*>(ctx);
+    self->m_statusBar->copy_label(("Error: " + message).c_str());
     fl_alert("Error: %s", message.c_str());
 }
 
@@ -53,19 +55,4 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
     while (dlg.shown()) Fl::wait();
 }
 
-void MainWindow::onAdd(Fl_Widget*, void* ctx)
-{
-    auto* self = static_cast<MainWindow*>(ctx);
-    self->m_model->addRow();
-    self->m_table->refresh();
-}
-
-void MainWindow::onDelete(Fl_Widget*, void* ctx)
-{
-    auto* self = static_cast<MainWindow*>(ctx);
-    int row = self->m_table->callback_row();
-    if (row < 0) return;
-    self->m_model->deleteRow(row);
-    self->m_table->refresh();
-}
 

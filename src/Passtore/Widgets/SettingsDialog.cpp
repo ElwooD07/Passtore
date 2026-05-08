@@ -3,7 +3,7 @@
 
 using namespace passtore;
 
-static const int DLG_W   = 420;
+static const int DLG_W   = 383;
 static const int TAB_TOP = 30;
 static const int ROW_H   = 32;
 static const int BTN_H   = 28;

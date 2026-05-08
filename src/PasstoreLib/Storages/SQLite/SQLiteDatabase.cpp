@@ -146,7 +146,13 @@ void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
 ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
 {
     // TODO: persist and load resource definitions from database
-    return {};
+    return {
+        { "Name",     false },
+        { "URL",      false },
+        { "Login",    false },
+        { "Password", true  },  // big=true → blurred in table
+        { "Notes",    false },
+    };
 }
 
 ResourceId sqlite::SQLiteDatabase::GetResourcesCount()
