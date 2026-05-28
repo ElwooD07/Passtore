@@ -9,7 +9,7 @@ namespace
 {
     uint64_t PowerOf2FastModulus(uint64_t target, uint64_t powerOf2)
     {
-        int mask = powerOf2 - 1;
+        uint64_t mask = powerOf2 - 1;
         return target & mask;
     }
 }

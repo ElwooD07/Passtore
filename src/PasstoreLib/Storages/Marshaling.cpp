@@ -1,7 +1,14 @@
 #include "pch.h"
 #include "Marshaling.h"
 #include "Security/SecureMemory.h"
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4267)
+#endif
 #include "json.hpp"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 using namespace passtore;
 
@@ -10,13 +17,14 @@ namespace
     json::JSON MarshalValuesRecursively(const std::vector<ResourceValue>& values)
     {
         auto doc = json::Array();
-        for (unsigned int i = 0; i < values.size(); ++i)
+        for (size_t i = 0; i < values.size(); ++i)
         {
-            doc[i]["n"] = values[i].name;
-            doc[i]["v"] = values[i].value;
+            auto index = static_cast<unsigned int>(i);
+            doc[index]["n"] = values[i].name;
+            doc[index]["v"] = values[i].value;
             if (!values[i].children.empty())
             {
-                doc["c"] = MarshalValuesRecursively(values);
+                doc[index]["c"] = MarshalValuesRecursively(values[i].children);
             }
         }
         return doc;

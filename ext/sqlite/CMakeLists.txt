@@ -6,6 +6,6 @@ add_library(sqlite STATIC
     sqlite3ext.h
 )
 
-target_include_directories(sqlite PUBLIC
+target_include_directories(sqlite SYSTEM PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

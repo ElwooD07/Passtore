@@ -2,10 +2,10 @@
 
 # Add subdirectories
 add_subdirectory(PasstoreLib)
-set_targets_folder("${CMAKE_CURRENT_SOURCE_DIR}/PasstoreLib" "src")
+configure_internal_target(PasstoreLib "src")
 
 add_subdirectory(Passtore)
-set_targets_folder("${CMAKE_CURRENT_SOURCE_DIR}/Passtore" "src")
+configure_internal_target(Passtore "src")
 
 add_subdirectory(PasstoreLibTest)
-set_targets_folder("${CMAKE_CURRENT_SOURCE_DIR}/PasstoreLibTest" "src")
+configure_internal_target(PasstoreLibTest "src")

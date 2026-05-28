@@ -46,13 +46,12 @@ set_target_properties(PasstoreLib PROPERTIES
 # Include directories
 target_include_directories(PasstoreLib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../ext/SimpleJSON
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../ext/TinyAES
 )
 
 # Link dependencies
 target_link_libraries(PasstoreLib
     sqlite
+    SimpleJSON
     plog
     TinyAES
 )

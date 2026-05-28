@@ -7,7 +7,7 @@ using namespace passtore;
 void utils::Sha256Calculate(const void* data, size_t size, Data& hash)
 {
     hash.resize(SHA256_HASH_SIZE);
-    Sha256Calculate(data, size, reinterpret_cast<SHA256_HASH*>(&hash[0]));
+    Sha256Calculate(data, static_cast<uint32_t>(size), reinterpret_cast<SHA256_HASH*>(&hash[0]));
 }
 
 Data utils::Sha256Calculate(const void* data, size_t size)

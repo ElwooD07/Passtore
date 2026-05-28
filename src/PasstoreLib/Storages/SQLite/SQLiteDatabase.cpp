@@ -190,7 +190,7 @@ ResourceId sqlite::SQLiteDatabase::Upsert(const Resource& resource)
         return InvalidResourceId;
     }
 
-    return resource.id == InvalidResourceId ? query.LastRowId() : resource.id;
+    return resource.id == InvalidResourceId ? static_cast<ResourceId>(query.LastRowId()) : resource.id;
 }
 
 void sqlite::SQLiteDatabase::DeleteResource(ResourceId id)
