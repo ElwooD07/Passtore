@@ -1,10 +1,5 @@
 #include "pch.h"
 #include "ResourcesListWidget.h"
-#include <FL/Fl_Table_Row.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Multiline_Input.H>
-#include <FL/fl_draw.H>
-#include <cstring>
 
 using namespace passtore;
 

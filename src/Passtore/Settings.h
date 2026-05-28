@@ -1,18 +1,15 @@
 #pragma once
-#include <string>
-#include <vector>
+#include <filesystem>
+#include "Storages/TableSettings.h"
 
 namespace passtore
 {
-    struct ColumnSettings
+    struct Settings
     {
-        std::string name;
-        bool visible = false;
-        bool blured = false;
-    };
+        TableSettings table;
 
-    struct TableSettings
-    {
-        std::vector<ColumnSettings> columns;
+        void Load(const std::filesystem::path& settingsPath,
+                  const ResourcesDefinition& defs);
+        void Save(const std::filesystem::path& settingsPath) const;
     };
 }

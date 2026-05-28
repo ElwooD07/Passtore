@@ -35,11 +35,14 @@ int main(int argc, char* argv[])
 {
     try
     {
+        std::filesystem::path dbPath = "passtore.db";
+        std::filesystem::path settingsPath = "passtore.json";
+
         sqlite::SQLiteDatabase db;
-        db.Open("passtore.db", "000");
+        db.Open(dbPath, "000");
         SeedFakeData(&db);
 
-        MainWindow w(&db);
+        MainWindow w(&db, settingsPath);
         w.show();
 
         return Fl::run();

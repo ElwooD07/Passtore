@@ -2,6 +2,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Table.H>
+#include <FL/Fl_Table_Row.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Multiline_Input.H>
 #include <FL/Fl_Button.H>
@@ -23,6 +24,7 @@
 #include <mutex>
 #include <functional>
 #include <algorithm>
+#include <cstring>
 
 #include "plog/Log.h"
 

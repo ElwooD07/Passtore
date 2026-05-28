@@ -83,3 +83,57 @@ void passtore::UnmarshalResourceFromJSON(Secret data, Resource& resource)
     UnmarshalResourceFromJSON(jsonText, resource);
     SecureWipe(jsonText.data(), jsonText.size());
 }
+
+TableSettings passtore::LoadTableSettings(const std::filesystem::path& path,
+                                           const ResourcesDefinition& defs)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+    {
+        return TableSettings::FromDefinition(defs);
+    }
+
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    auto doc = json::JSON::Load(ss.str());
+
+    TableSettings saved;
+    auto cols = doc["columns"];
+    if (!cols.IsNull())
+    {
+        auto range = cols.ArrayRange();
+        for (auto it = range.begin(); it != range.end(); ++it)
+        {
+            ColumnSettings cs;
+            cs.name    = (*it)["name"].ToString();
+            cs.visible = (*it)["visible"].ToBool();
+            cs.blured  = (*it)["blured"].ToBool();
+            saved.columns.push_back(cs);
+        }
+    }
+
+    return TableSettings::MergeWithSaved(defs, saved);
+}
+
+void passtore::SaveTableSettings(const std::filesystem::path& path,
+                                  const TableSettings& settings)
+{
+    json::JSON doc;
+    doc["columns"] = json::Array();
+
+    for (size_t i = 0; i < settings.columns.size(); ++i)
+    {
+        const auto& col = settings.columns[i];
+        auto idx = static_cast<unsigned int>(i);
+        doc["columns"][idx]["name"]    = col.name;
+        doc["columns"][idx]["visible"] = col.visible;
+        doc["columns"][idx]["blured"]  = col.blured;
+    }
+
+    std::ofstream file(path);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("SaveTableSettings: cannot open: " + path.string());
+    }
+    file << doc.dump();
+}

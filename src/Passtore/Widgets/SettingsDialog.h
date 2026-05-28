@@ -5,7 +5,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Group.H>
 #include <vector>
-#include "Settings.h"
+#include "Storages/TableSettings.h"
 #include "Storages/IResourceStorage.h"
 #include "Widgets/ColumnSettingsWidget.h"
 
@@ -14,7 +14,7 @@ namespace passtore
     class SettingsDialog : public Fl_Window
     {
     public:
-        explicit SettingsDialog(const ResourcesDefinition& defs);
+        SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current);
         TableSettings getTableSettings() const;
 
     private:

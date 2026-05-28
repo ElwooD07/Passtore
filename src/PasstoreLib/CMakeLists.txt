@@ -4,6 +4,7 @@
 set(PASSTORELIB_SOURCES
     Security/Cryptor.cpp
     Storages/Marshaling.cpp
+    Storages/TableSettings.cpp
     Storages/SQLite/CellsCryptor.cpp
     Storages/SQLite/Connection.cpp
     Storages/SQLite/Query.cpp
@@ -20,6 +21,7 @@ set(PASSTORELIB_HEADERS
     Security/SensitiveData.h
     Storages/IResourceStorage.h
     Storages/Marshaling.h
+    Storages/TableSettings.h
     Storages/Resource.h
     Storages/SQLite/CellsCryptor.h
     Storages/SQLite/Connection.h

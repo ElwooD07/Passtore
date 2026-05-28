@@ -8,7 +8,7 @@ static const int TAB_TOP = 30;
 static const int ROW_H   = 32;
 static const int BTN_H   = 28;
 
-SettingsDialog::SettingsDialog(const ResourcesDefinition& defs)
+SettingsDialog::SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current)
     : Fl_Window(DLG_W, 100, "Settings")
 {
     int scrollH = std::min(static_cast<int>(defs.size()) * ROW_H + 10, 260);
@@ -24,9 +24,20 @@ SettingsDialog::SettingsDialog(const ResourcesDefinition& defs)
             tabTable->begin();
             auto* scroll = new Fl_Scroll(10, TAB_TOP + 5, DLG_W - 20, dlgH - BTN_H - 30 - TAB_TOP - 10);
             scroll->begin();
-            for (size_t i = 0; i < defs.size(); ++i) {
-                ColumnSettings cs{ defs[i].name, true, false };
-                auto* w = new ColumnSettingsWidget(10, TAB_TOP + 5 + static_cast<int>(i) * ROW_H, DLG_W - 36, cs);
+            for (size_t i = 0; i < defs.size(); ++i)
+            {
+                // Find matching saved settings for this column, or use defaults.
+                ColumnSettings cs{ defs[i].name, true, defs[i].big };
+                for (const auto& saved : current.columns)
+                {
+                    if (saved.name == defs[i].name)
+                    {
+                        cs = saved;
+                        break;
+                    }
+                }
+                auto* w = new ColumnSettingsWidget(
+                    10, TAB_TOP + 5 + static_cast<int>(i) * ROW_H, DLG_W - 36, cs);
                 m_columnWidgets.push_back(w);
             }
             scroll->end();
@@ -52,10 +63,12 @@ SettingsDialog::SettingsDialog(const ResourcesDefinition& defs)
 
 TableSettings SettingsDialog::getTableSettings() const
 {
-    TableSettings sets;
+    TableSettings result;
     for (auto* w : m_columnWidgets)
-        sets.columns.push_back(w->getSets());
-    return sets;
+    {
+        result.columns.push_back(w->getSets());
+    }
+    return result;
 }
 
 void SettingsDialog::onSave(Fl_Widget*, void* ctx)

@@ -4,6 +4,7 @@
 set(PASSTORELIBTEST_SOURCES
     CryptorTest.cpp
     SQLiteDatabaseTest.cpp
+    TableSettingsTest.cpp
     main.cpp
     pch.cpp
 )

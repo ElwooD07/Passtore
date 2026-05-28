@@ -1,7 +1,9 @@
 #pragma once
+#include <filesystem>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Box.H>
+#include "Settings.h"
 #include "Storages/IResourceStorage.h"
 
 namespace passtore
@@ -12,16 +14,18 @@ namespace passtore
     class MainWindow : public Fl_Window
     {
     public:
-        explicit MainWindow(IResourceStorage* storage);
+        MainWindow(IResourceStorage* storage, const std::filesystem::path& settingsPath);
 
     private:
         static void onError(void* ctx, const std::string& message);
         static void onSettings(Fl_Widget*, void* ctx);
 
     private:
-        IResourceStorage*    m_storage;
-        ResourceTableModel*  m_model;
-        ResourcesListWidget* m_listWidget;
-        Fl_Box*              m_statusBar;
+        IResourceStorage*      m_storage;
+        ResourceTableModel*    m_model;
+        ResourcesListWidget*   m_listWidget;
+        Fl_Box*                m_statusBar;
+        Settings               m_settings;
+        std::filesystem::path  m_settingsPath;
     };
 }

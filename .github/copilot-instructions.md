@@ -63,3 +63,8 @@ Logging before throwing is acceptable for diagnostics, but a silent return is ne
 - Do NOT check `!Step()` to detect "not found" in write operations (Swap, Delete, etc.). Write paths trust that callers pass valid IDs.
 - `!Step()` checks are only appropriate in **read operations** that return a status (e.g. `GetOne`, `GetNext`) where "no row" is a valid, expected outcome to propagate up.
 - Never throw based on `!Step()` inside a write helper — `Step()` already throws on real failures.
+
+## Precompiled Header Policy
+
+All standard library (`<std>`) includes belong in the target's `pch.h`, not in individual `.cpp` files.
+When adding a new std header, add it to the appropriate `pch.h` and do **not** `#include` it in the `.cpp` file.

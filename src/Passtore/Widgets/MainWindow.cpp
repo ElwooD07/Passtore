@@ -12,10 +12,14 @@ static const int STATUS_H = 22;
 static const int WIN_W    = 722;
 static const int WIN_H    = 421;
 
-MainWindow::MainWindow(IResourceStorage* storage)
+MainWindow::MainWindow(IResourceStorage* storage, const std::filesystem::path& settingsPath)
     : Fl_Window(WIN_W, WIN_H, PRODUCT_NAME)
     , m_storage(storage)
+    , m_settingsPath(settingsPath)
 {
+    auto defs = m_storage->GetResourcesDefinition();
+    m_settings.Load(settingsPath, defs);
+
     size_range(600, 360);
     begin();
 
@@ -50,11 +54,13 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
 {
     auto* self = static_cast<MainWindow*>(ctx);
     auto defs = self->m_storage->GetResourcesDefinition();
-    SettingsDialog dlg(defs);
+    SettingsDialog dlg(defs, self->m_settings.table);
     dlg.show();
-    while (dlg.shown()) {
+    while (dlg.shown())
+    {
         Fl::wait();
     }
+    self->m_settings.table = dlg.getTableSettings();
+    self->m_settings.Save(self->m_settingsPath);
 }
-
 
