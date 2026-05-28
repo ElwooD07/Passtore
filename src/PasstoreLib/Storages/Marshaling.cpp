@@ -57,7 +57,7 @@ std::string passtore::MarshalResourceToJSON(const Resource& resource)
     {
         document["values"] = MarshalValuesRecursively(resource.values);
     }
-    return document.ToString();
+    return document.dump();
 }
 
 void passtore::UnmarshalResourceFromJSON(const std::string& data, Resource& resource)

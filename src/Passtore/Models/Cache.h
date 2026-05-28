@@ -1,17 +1,16 @@
 #pragma once
-#include <map>
-#include <chrono>
+#include <list>
+#include <unordered_map>
 #include <cassert>
 
 namespace passtore
 {
-    // Not thread safe
-    // ! It is so strange, reimplement it !
+    // Not thread safe. LRU eviction policy.
     template<typename K, class T>
     class Cache
     {
     public:
-        Cache(size_t capacity)
+        explicit Cache(size_t capacity)
             : m_capacity(capacity)
         {
             assert(capacity > 0);
@@ -19,62 +18,63 @@ namespace passtore
 
         T* Get(const K& key)
         {
-            auto found = m_data.find(key);
-            if (found == m_data.end())
+            auto it = m_map.find(key);
+            if (it == m_map.end())
             {
                 return nullptr;
             }
-
-            uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
-            m_lastUsed[now] = key;
-
-            return &found->second;
+            m_order.splice(m_order.begin(), m_order, it->second.orderIt);
+            return &it->second.value;
         }
 
         T& Set(const K& key, const T& obj)
         {
-            auto& res = m_data[key] = obj;
-
-            if (m_data.size() == m_capacity)
+            auto it = m_map.find(key);
+            if (it != m_map.end())
             {
-                Remove(takeLastUsed());
+                it->second.value = obj;
+                m_order.splice(m_order.begin(), m_order, it->second.orderIt);
+                return it->second.value;
             }
 
-            return res;
+            if (m_map.size() == m_capacity)
+            {
+                m_map.erase(m_order.back());
+                m_order.pop_back();
+            }
+
+            m_order.push_front(key);
+            auto& entry = m_map[key];
+            entry.value = obj;
+            entry.orderIt = m_order.begin();
+            return entry.value;
         }
 
         void Remove(const K& key)
         {
-            auto found = m_data.find(key);
-            if (found != m_data.end())
+            auto it = m_map.find(key);
+            if (it != m_map.end())
             {
-                m_data.erase(found);
+                m_order.erase(it->second.orderIt);
+                m_map.erase(it);
             }
         }
 
         void Clear()
         {
-            m_data.clear();
-            m_lastUsed.clear();
+            m_map.clear();
+            m_order.clear();
         }
 
     private:
-        K takeLastUsed()
+        struct Entry
         {
-            auto candidate = m_lastUsed.begin();
-            if (candidate == m_lastUsed.end())
-            {
-                return m_data.begin()->first;
-            }
-            K key = candidate->second;
-            m_lastUsed.erase(candidate);
-            return key;
-        }
+            T value;
+            typename std::list<K>::iterator orderIt;
+        };
 
-    private:
         const size_t m_capacity;
-        std::map<K, T> m_data;
-        std::map<uint64_t, K> m_lastUsed;
+        std::list<K> m_order;
+        std::unordered_map<K, Entry> m_map;
     };
 }

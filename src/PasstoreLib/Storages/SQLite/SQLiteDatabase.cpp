@@ -195,12 +195,35 @@ ResourceId sqlite::SQLiteDatabase::Upsert(const Resource& resource)
 
 void sqlite::SQLiteDatabase::DeleteResource(ResourceId id)
 {
-    // TODO
+    auto query = m_db.CreateQuery("DELETE FROM Resources WHERE ROWID=?;");
+    query.BindInt64(1, static_cast<int64_t>(id));
+    query.Step();
 }
 
 void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
 {
-    // TODO
+    auto readBlob = [this](ResourceId id, Data& out)
+    {
+        auto q = m_db.CreateQuery("SELECT Data FROM Resources WHERE ROWID=" + std::to_string(id) + ";");
+        q.Step();
+        q.ColumnBlob(0, out);
+    };
+
+    auto transaction = m_db.CreateTransaction();
+
+    Data dataFirst, dataSecond;
+    readBlob(first, dataFirst);
+    readBlob(second, dataSecond);
+
+    auto q1 = m_db.CreateQuery("UPDATE Resources SET Data=? WHERE ROWID=" + std::to_string(first) + ";");
+    q1.BindBlob(1, dataSecond);
+    q1.Step();
+
+    auto q2 = m_db.CreateQuery("UPDATE Resources SET Data=? WHERE ROWID=" + std::to_string(second) + ";");
+    q2.BindBlob(1, dataFirst);
+    q2.Step();
+
+    transaction.Commit();
 }
 
 ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
