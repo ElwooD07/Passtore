@@ -18,38 +18,34 @@ namespace
 
 TEST(TableSettingsTest, FromDefinition_AllVisibleByDefault)
 {
-    auto defs = MakeDefs({ {"Name", false}, {"Password", true}, {"Notes", false} });
+    auto defs = MakeDefs({ {"Name", false}, {"Password", false}, {"Notes", true} });
     auto ts = TableSettings::FromDefinition(defs);
 
     ASSERT_EQ(3u, ts.columns.size());
     EXPECT_EQ("Name",     ts.columns[0].name);
     EXPECT_TRUE(ts.columns[0].visible);
-    EXPECT_FALSE(ts.columns[0].blured);
 
     EXPECT_EQ("Password", ts.columns[1].name);
     EXPECT_TRUE(ts.columns[1].visible);
-    EXPECT_TRUE(ts.columns[1].blured);   // big=true → blured=true
 
     EXPECT_EQ("Notes",    ts.columns[2].name);
     EXPECT_TRUE(ts.columns[2].visible);
-    EXPECT_FALSE(ts.columns[2].blured);
 }
 
 TEST(TableSettingsTest, MergeWithSaved_PreservesSavedValues)
 {
-    auto defs = MakeDefs({ {"Name", false}, {"URL", false}, {"Password", true} });
+    auto defs = MakeDefs({ {"Name", false}, {"URL", false}, {"Password", false} });
 
     TableSettings saved;
     saved.columns = {
-        { "Name",     false, false },
-        { "URL",      false, false },
-        { "Password", false, false },  // user turned off blur
+        { "Name",     false },
+        { "URL",      false },
+        { "Password", false },
     };
 
     auto ts = TableSettings::MergeWithSaved(defs, saved);
 
     ASSERT_EQ(3u, ts.columns.size());
-    EXPECT_FALSE(ts.columns[2].blured);   // saved value preserved
     EXPECT_FALSE(ts.columns[2].visible);  // saved value preserved
 }
 
@@ -59,7 +55,7 @@ TEST(TableSettingsTest, MergeWithSaved_NewColumnGetsDefault)
 
     TableSettings saved;
     saved.columns = {
-        { "Name", true, false },
+        { "Name", true },
         // "Login" missing from saved
     };
 
@@ -68,7 +64,6 @@ TEST(TableSettingsTest, MergeWithSaved_NewColumnGetsDefault)
     ASSERT_EQ(2u, ts.columns.size());
     EXPECT_EQ("Login", ts.columns[1].name);
     EXPECT_TRUE(ts.columns[1].visible);   // default
-    EXPECT_FALSE(ts.columns[1].blured);   // default
 }
 
 TEST(TableSettingsTest, MergeWithSaved_DropsRemovedColumns)
@@ -77,8 +72,8 @@ TEST(TableSettingsTest, MergeWithSaved_DropsRemovedColumns)
 
     TableSettings saved;
     saved.columns = {
-        { "Name",     true, false },
-        { "OldField", true, false },  // removed from DB
+        { "Name",     true },
+        { "OldField", true },  // removed from DB
     };
 
     auto ts = TableSettings::MergeWithSaved(defs, saved);
@@ -89,7 +84,7 @@ TEST(TableSettingsTest, MergeWithSaved_DropsRemovedColumns)
 
 TEST(TableSettingsTest, MergeWithSaved_EmptySavedEqualsFromDefinition)
 {
-    auto defs = MakeDefs({ {"Name", false}, {"Password", true} });
+    auto defs = MakeDefs({ {"Name", false}, {"Password", false} });
     TableSettings empty;
 
     auto merged  = TableSettings::MergeWithSaved(defs, empty);
@@ -100,6 +95,5 @@ TEST(TableSettingsTest, MergeWithSaved_EmptySavedEqualsFromDefinition)
     {
         EXPECT_EQ(defaults.columns[i].name,    merged.columns[i].name);
         EXPECT_EQ(defaults.columns[i].visible, merged.columns[i].visible);
-        EXPECT_EQ(defaults.columns[i].blured,  merged.columns[i].blured);
     }
 }

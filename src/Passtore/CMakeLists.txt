@@ -6,7 +6,7 @@ set(PASSTORE_SOURCES
     Widgets/ChangePasswordDialog.cpp
     Widgets/ColumnSettingsWidget.cpp
     Widgets/MainWindow.cpp
-    Widgets/ResourcesListWidget.cpp
+    Widgets/ResourcesTableWidget.cpp
     Widgets/SettingsDialog.cpp
     main.cpp
     pch.cpp
@@ -21,7 +21,7 @@ set(PASSTORE_HEADERS
     Widgets/ChangePasswordDialog.h
     Widgets/ColumnSettingsWidget.h
     Widgets/MainWindow.h
-    Widgets/ResourcesListWidget.h
+    Widgets/ResourcesTableWidget.h
     Widgets/SettingsDialog.h
     pch.h
 )

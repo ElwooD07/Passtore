@@ -15,6 +15,7 @@ namespace passtore
         int columnCount() const override;
         std::string cellData(int row, int col) const override;
         bool isBigColumn(int col) const override;
+        bool isVisibleColumn(int col) const override;
         std::string columnName(int col) const override;
         std::string rowSubject(int row) const override;
         bool setCellData(int row, int col, const std::string& value) override;

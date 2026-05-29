@@ -202,11 +202,11 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
     auto defs = db.GetResourcesDefinition();
 
     ASSERT_EQ(5u, defs.size());
-    EXPECT_EQ("Name",     defs[0].name);  EXPECT_FALSE(defs[0].big);
-    EXPECT_EQ("URL",      defs[1].name);  EXPECT_FALSE(defs[1].big);
-    EXPECT_EQ("Login",    defs[2].name);  EXPECT_FALSE(defs[2].big);
-    EXPECT_EQ("Password", defs[3].name);  EXPECT_TRUE(defs[3].big);
-    EXPECT_EQ("Notes",    defs[4].name);  EXPECT_FALSE(defs[4].big);
+    EXPECT_EQ("Name",     defs[0].name);  EXPECT_FALSE(defs[0].big);  EXPECT_TRUE(defs[0].visible);
+    EXPECT_EQ("URL",      defs[1].name);  EXPECT_FALSE(defs[1].big);  EXPECT_TRUE(defs[1].visible);
+    EXPECT_EQ("Login",    defs[2].name);  EXPECT_FALSE(defs[2].big);  EXPECT_TRUE(defs[2].visible);
+    EXPECT_EQ("Password", defs[3].name);  EXPECT_FALSE(defs[3].big);  EXPECT_FALSE(defs[3].visible);
+    EXPECT_EQ("Notes",    defs[4].name);  EXPECT_TRUE(defs[4].big);   EXPECT_TRUE(defs[4].visible);
 }
 
 TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
@@ -227,7 +227,8 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
     ASSERT_EQ(5u, defs.size());
     EXPECT_EQ("Name",     defs[0].name);
     EXPECT_EQ("Password", defs[3].name);
-    EXPECT_TRUE(defs[3].big);
+    EXPECT_FALSE(defs[3].big);
+    EXPECT_FALSE(defs[3].visible);
 }
 
 TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)

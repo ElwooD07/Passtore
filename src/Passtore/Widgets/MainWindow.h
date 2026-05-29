@@ -9,7 +9,7 @@
 namespace passtore
 {
     class ResourceTableModel;
-    class ResourcesListWidget;
+    class ResourcesTableWidget;
 
     class MainWindow : public Fl_Window
     {
@@ -24,7 +24,7 @@ namespace passtore
     private:
         IResourceStorage*      m_storage;
         ResourceTableModel*    m_model;
-        ResourcesListWidget*   m_listWidget;
+        ResourcesTableWidget*   m_listWidget;
         Fl_Box*                m_statusBar;
         Settings               m_settings;
         std::filesystem::path  m_settingsPath;

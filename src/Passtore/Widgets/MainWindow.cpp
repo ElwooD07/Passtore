@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MainWindow.h"
-#include "Widgets/ResourcesListWidget.h"
+#include "Widgets/ResourcesTableWidget.h"
 #include "Models/ResourceTableModel.h"
 #include "Widgets/SettingsDialog.h"
 #include "Widgets/ChangePasswordDialog.h"
@@ -33,7 +33,7 @@ MainWindow::MainWindow(IResourceStorage* storage, const std::filesystem::path& s
     m_model = new ResourceTableModel(storage);
     m_model->setErrorCallback(onError, this);
 
-    m_listWidget = new ResourcesListWidget(0, MENU_H, WIN_W, listH);
+    m_listWidget = new ResourcesTableWidget(0, MENU_H, WIN_W, listH);
     m_listWidget->setModel(m_model);
 
     m_statusBar = new Fl_Box(0, MENU_H + listH, WIN_W, STATUS_H);

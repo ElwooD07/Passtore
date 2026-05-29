@@ -16,9 +16,6 @@ ColumnSettingsWidget::ColumnSettingsWidget(int x, int y, int w, const ColumnSett
 
     m_chkVisible = new Fl_Check_Button(x + nameW, y + 4, 80, 24, "Visible");
     m_chkVisible->value(sets.visible ? 1 : 0);
-
-    m_chkBlured = new Fl_Check_Button(x + nameW + 86, y + 4, 80, 24, "Blured");
-    m_chkBlured->value(sets.blured ? 1 : 0);
     end();
 
     box(FL_FLAT_BOX);
@@ -26,5 +23,5 @@ ColumnSettingsWidget::ColumnSettingsWidget(int x, int y, int w, const ColumnSett
 
 ColumnSettings ColumnSettingsWidget::getSets() const
 {
-    return ColumnSettings{ m_name, m_chkVisible->value() != 0, m_chkBlured->value() != 0 };
+    return ColumnSettings{ m_name, m_chkVisible->value() != 0 };
 }

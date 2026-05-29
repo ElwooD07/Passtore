@@ -262,11 +262,11 @@ void sqlite::SQLiteDatabase::EnsureResourceDefinitionsTable()
 void sqlite::SQLiteDatabase::SeedDefaultResourceDefinitions()
 {
     const ResourcesDefinition defaults = {
-        { "Name",     false },
-        { "URL",      false },
-        { "Login",    false },
-        { "Password", true  },
-        { "Notes",    false },
+        { "Name",     false, true  },
+        { "URL",      false, true  },
+        { "Login",    false, true  },
+        { "Password", false, false },
+        { "Notes",    true,  true  },
     };
 
     static const std::string s_insertStr(

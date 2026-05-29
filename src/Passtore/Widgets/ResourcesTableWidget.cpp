@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "ResourcesListWidget.h"
+#include "ResourcesTableWidget.h"
 
 using namespace passtore;
 

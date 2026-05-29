@@ -17,6 +17,7 @@ namespace passtore
 
         virtual std::string cellData(int row, int col) const = 0;
         virtual bool isBigColumn(int col) const = 0;
+        virtual bool isVisibleColumn(int col) const = 0;
         virtual std::string columnName(int col) const = 0;
         virtual std::string rowSubject(int row) const = 0;
         virtual bool setCellData(int row, int col, const std::string& value) = 0;

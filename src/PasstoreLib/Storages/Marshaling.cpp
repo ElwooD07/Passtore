@@ -107,7 +107,6 @@ TableSettings passtore::LoadTableSettings(const std::filesystem::path& path,
             ColumnSettings cs;
             cs.name    = (*it)["name"].ToString();
             cs.visible = (*it)["visible"].ToBool();
-            cs.blured  = (*it)["blured"].ToBool();
             saved.columns.push_back(cs);
         }
     }
@@ -127,7 +126,6 @@ void passtore::SaveTableSettings(const std::filesystem::path& path,
         auto idx = static_cast<unsigned int>(i);
         doc["columns"][idx]["name"]    = col.name;
         doc["columns"][idx]["visible"] = col.visible;
-        doc["columns"][idx]["blured"]  = col.blured;
     }
 
     std::ofstream file(path);

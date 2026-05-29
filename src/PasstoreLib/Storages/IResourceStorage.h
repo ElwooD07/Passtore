@@ -7,8 +7,8 @@ namespace passtore
     struct ResourceDefinition
     {
         std::string name;
-        bool big     = false;
-        bool visible = true;
+        bool big     = false;  // multiline text editor
+        bool visible = true;   // false = content masked with asterisks
     };
     using ResourcesDefinition = std::vector<ResourceDefinition>;
 

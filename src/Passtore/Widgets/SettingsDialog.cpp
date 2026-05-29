@@ -27,7 +27,7 @@ SettingsDialog::SettingsDialog(const ResourcesDefinition& defs, const TableSetti
             for (size_t i = 0; i < defs.size(); ++i)
             {
                 // Find matching saved settings for this column, or use defaults.
-                ColumnSettings cs{ defs[i].name, true, defs[i].big };
+                ColumnSettings cs{ defs[i].name, true };
                 for (const auto& saved : current.columns)
                 {
                     if (saved.name == defs[i].name)

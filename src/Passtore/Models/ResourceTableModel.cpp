@@ -47,6 +47,14 @@ bool ResourceTableModel::isBigColumn(int col) const
     return m_resourcesDefs[col].big;
 }
 
+bool ResourceTableModel::isVisibleColumn(int col) const
+{
+    if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
+        return true;
+    }
+    return m_resourcesDefs[col].visible;
+}
+
 std::string ResourceTableModel::columnName(int col) const
 {
     if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {

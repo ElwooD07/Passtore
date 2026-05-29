@@ -1,1 +1,1 @@
-// ResourceViewDelegate removed — editing now handled inline by ResourcesListWidget (Fl_Table).
+// ResourceViewDelegate removed — editing now handled inline by ResourcesTableWidget (Fl_Table).

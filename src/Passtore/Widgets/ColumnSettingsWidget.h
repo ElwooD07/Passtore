@@ -7,7 +7,7 @@
 
 namespace passtore
 {
-    // Single row in SettingsDialog — label | Visible checkbox | Blured checkbox
+    // Single row in SettingsDialog — label | Visible checkbox
     class ColumnSettingsWidget : public Fl_Group
     {
     public:
@@ -17,7 +17,6 @@ namespace passtore
     private:
         Fl_Box*          m_lblName;
         Fl_Check_Button* m_chkVisible;
-        Fl_Check_Button* m_chkBlured;
         std::string      m_name;
     };
 }
