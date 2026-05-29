@@ -45,6 +45,7 @@ namespace
             value.name = (*it)["n"].ToString();
             value.value = (*it)["v"].ToString();
             UnmarshalValuesRecursively((*it)["c"], value.children);
+            values.push_back(std::move(value));
         }
     }
 }
