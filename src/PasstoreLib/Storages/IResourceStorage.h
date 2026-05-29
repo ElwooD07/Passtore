@@ -7,7 +7,8 @@ namespace passtore
     struct ResourceDefinition
     {
         std::string name;
-        bool big = false;
+        bool big     = false;
+        bool visible = true;
     };
     using ResourcesDefinition = std::vector<ResourceDefinition>;
 
@@ -30,6 +31,5 @@ class IResourceStorage
         virtual void Swap(ResourceId first, ResourceId second) = 0;
 
         virtual ResourcesDefinition GetResourcesDefinition() = 0;
-        virtual ResourceId GetResourcesCount() = 0;
     };
 }

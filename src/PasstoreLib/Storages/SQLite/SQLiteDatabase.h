@@ -23,11 +23,15 @@ namespace passtore
             virtual void DeleteResource(ResourceId id) override;
             virtual void Swap(ResourceId first, ResourceId second) override;
             virtual ResourcesDefinition GetResourcesDefinition() override;
-            virtual ResourceId GetResourcesCount() override;
 
         private:
             void BuildOpenedDb(const std::string& password);
             void InitOpenedDb(const std::string& password);
+            void ReadMetadata(Data& salt, Data& phrase, Data& phraseHmac, Data& encryptedKeys, Data& keysHmac);
+            void VerifyPhrase(const Data& phrase, const Data& phraseHmac, const Data& passwordKey, const SensitiveData& passwordKeyMaterial);
+            void DecryptMasterKey(const Data& encryptedKeys, const Data& keysHmac, const Data& passwordKey, const SensitiveData& passwordKeyMaterial);
+            void EnsureResourceDefinitionsTable();
+            void SeedDefaultResourceDefinitions();
 
         private:
             Connection m_db;

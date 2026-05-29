@@ -3,12 +3,14 @@
 
 using namespace passtore;
 
-static const int ROW_H  = 24;
-static const int COL_W  = 140;
-static const int HDR_H  = 24;
-static const int BTN_H  = 28;
-static const int BTN_W  = 80;
-static const int BTN_GAP = 4;
+static const int FONT_SIZE  = 13;
+static const int ROW_H      = FONT_SIZE * 2;      // 26
+static const int HDR_H      = FONT_SIZE * 2;      // 26
+static const int BTN_H      = FONT_SIZE * 2 + 4;  // 30
+static const int BTN_W      = 80;
+static const int BTN_GAP    = 4;
+static const int COL_W_NORM = 150;  // default column width
+static const int COL_W_BIG  = 220;  // wider for big (multiline) columns
 
 // ─── Inner table widget ────────────────────────────────────────────────────
 
@@ -21,7 +23,7 @@ public:
         col_header(1);
         col_header_height(HDR_H);
         row_height_all(ROW_H);
-        col_width_all(COL_W);
+        col_width_all(COL_W_NORM);
         col_resize(1);
         row_resize(0);
         type(SELECT_SINGLE);
@@ -30,9 +32,13 @@ public:
         m_editor = new Fl_Input(0, 0, 0, 0);
         m_editor->hide();
         m_editor->box(FL_BORDER_BOX);
+        m_editor->textfont(FL_HELVETICA);
+        m_editor->textsize(FONT_SIZE);
         m_bigEditor = new Fl_Multiline_Input(0, 0, 0, 0);
         m_bigEditor->hide();
         m_bigEditor->box(FL_BORDER_BOX);
+        m_bigEditor->textfont(FL_COURIER);
+        m_bigEditor->textsize(FONT_SIZE);
         end();
     }
 
@@ -41,6 +47,17 @@ public:
     void setModel(ITableModel* model)
     {
         m_model = model;
+        if (m_model)
+        {
+            col_width_all(COL_W_NORM);
+            for (int c = 0; c < m_model->columnCount(); ++c)
+            {
+                if (m_model->isBigColumn(c))
+                {
+                    col_width(c, COL_W_BIG);
+                }
+            }
+        }
         refresh();
     }
 
@@ -67,7 +84,7 @@ protected:
         switch (ctx)
         {
         case CONTEXT_STARTPAGE:
-            fl_font(FL_HELVETICA, 13);
+            fl_font(FL_HELVETICA, FONT_SIZE);
             return;
 
         case CONTEXT_COL_HEADER:
@@ -76,7 +93,7 @@ protected:
             if (m_model)
             {
                 fl_color(FL_FOREGROUND_COLOR);
-                fl_font(FL_HELVETICA_BOLD, 13);
+                fl_font(FL_HELVETICA_BOLD, FONT_SIZE);
                 fl_draw(m_model->columnName(C).c_str(), X, Y, W, H, FL_ALIGN_CENTER | FL_ALIGN_CLIP);
             }
             fl_pop_clip();
@@ -88,7 +105,7 @@ protected:
             }
             fl_push_clip(X, Y, W, H);
             {
-                Fl_Color bg = row_selected(R) ? selection_color() : FL_WHITE;
+                Fl_Color bg = row_selected(R) ? selection_color() : FL_BACKGROUND2_COLOR;
                 fl_color(bg);
                 fl_rectf(X, Y, W, H);
 
@@ -100,7 +117,7 @@ protected:
                     std::fill(data.begin(), data.end(), '\0');
 
                     fl_color(row_selected(R) ? FL_WHITE : FL_FOREGROUND_COLOR);
-                    fl_font(FL_HELVETICA, 13);
+                    fl_font(FL_HELVETICA, FONT_SIZE);
                     fl_draw(display.c_str(), X + 4, Y, W - 8, H, FL_ALIGN_LEFT | FL_ALIGN_CLIP);
                     std::fill(display.begin(), display.end(), '\0');
                 }

@@ -19,6 +19,7 @@ namespace passtore
     private:
         static void onError(void* ctx, const std::string& message);
         static void onSettings(Fl_Widget*, void* ctx);
+        static void onChangePassword(Fl_Widget*, void* ctx);
 
     private:
         IResourceStorage*      m_storage;

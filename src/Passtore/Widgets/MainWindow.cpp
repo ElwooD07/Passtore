@@ -3,6 +3,7 @@
 #include "Widgets/ResourcesListWidget.h"
 #include "Models/ResourceTableModel.h"
 #include "Widgets/SettingsDialog.h"
+#include "Widgets/ChangePasswordDialog.h"
 #include <FL/fl_ask.H>
 
 using namespace passtore;
@@ -24,8 +25,9 @@ MainWindow::MainWindow(IResourceStorage* storage, const std::filesystem::path& s
     begin();
 
     auto* menu = new Fl_Menu_Bar(0, 0, WIN_W, MENU_H);
-    menu->add("File/Settings", 0, onSettings, this);
-    menu->add("File/Exit",     0, [](Fl_Widget*, void*){ exit(0); }, nullptr);
+    menu->add("File/Settings",         0, onSettings,        this);
+    menu->add("File/Change Password",  0, onChangePassword,  this);
+    menu->add("File/Exit",             0, [](Fl_Widget*, void*){ exit(0); }, nullptr);
 
     int listH = WIN_H - MENU_H - STATUS_H;
     m_model = new ResourceTableModel(storage);
@@ -62,5 +64,16 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
     }
     self->m_settings.table = dlg.getTableSettings();
     self->m_settings.Save(self->m_settingsPath);
+}
+
+void MainWindow::onChangePassword(Fl_Widget*, void* ctx)
+{
+    auto* self = static_cast<MainWindow*>(ctx);
+    ChangePasswordDialog dlg(self->m_storage);
+    dlg.show();
+    while (dlg.shown())
+    {
+        Fl::wait();
+    }
 }
 

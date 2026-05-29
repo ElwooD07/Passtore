@@ -9,3 +9,8 @@ ext/TinyAES/
 .claude/
 .vscode/
 *.pro.user
+
+# Runtime data (generated at launch, must not be committed)
+passtore.db
+passtore.json
+test*.db

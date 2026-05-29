@@ -99,10 +99,16 @@ TEST(SQLiteDatabaseTest, DeleteResource_RemovesFromDB)
     ResourceId id = InvalidResourceId;
     ASSERT_NO_THROW(id = db.Upsert(MakeResource("To be deleted")));
     ASSERT_NE(InvalidResourceId, id);
-    EXPECT_EQ(1, db.GetResourcesCount());
+    {
+        Resource probe;
+        EXPECT_EQ(ResourceState::Present, db.GetNext(InvalidResourceId, probe));
+    }
 
     ASSERT_NO_THROW(db.DeleteResource(id));
-    EXPECT_EQ(0, db.GetResourcesCount());
+    {
+        Resource probe;
+        EXPECT_EQ(ResourceState::Deleted, db.GetNext(InvalidResourceId, probe));
+    }
 
     Resource loaded;
     EXPECT_EQ(ResourceState::Deleted, db.GetOne(id, loaded));
@@ -125,7 +131,10 @@ TEST(SQLiteDatabaseTest, DeleteResource_PersistsAcrossReopen)
     {
         sqlite::SQLiteDatabase db;
         ASSERT_NO_THROW(db.Open(dbPath, "testpass"));
-        EXPECT_EQ(0, db.GetResourcesCount());
+        {
+            Resource probe;
+            EXPECT_EQ(ResourceState::Deleted, db.GetNext(InvalidResourceId, probe));
+        }
         Resource loaded;
         EXPECT_EQ(ResourceState::Deleted, db.GetOne(id, loaded));
     }
@@ -173,6 +182,45 @@ TEST(SQLiteDatabaseTest, Swap_ExchangesData)
     Resource loaded2;
     ASSERT_EQ(ResourceState::Present, db.GetOne(id2, loaded2));
     EXPECT_EQ("First", loaded2.subject);
+}
+
+TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
+{
+    auto dbPath = std::filesystem::current_path().parent_path() / "test_rdef_defaults.db";
+    std::filesystem::remove(dbPath);
+
+    sqlite::SQLiteDatabase db;
+    ASSERT_NO_THROW(db.Open(dbPath, "testpass"));
+
+    auto defs = db.GetResourcesDefinition();
+
+    ASSERT_EQ(5u, defs.size());
+    EXPECT_EQ("Name",     defs[0].name);  EXPECT_FALSE(defs[0].big);
+    EXPECT_EQ("URL",      defs[1].name);  EXPECT_FALSE(defs[1].big);
+    EXPECT_EQ("Login",    defs[2].name);  EXPECT_FALSE(defs[2].big);
+    EXPECT_EQ("Password", defs[3].name);  EXPECT_TRUE(defs[3].big);
+    EXPECT_EQ("Notes",    defs[4].name);  EXPECT_FALSE(defs[4].big);
+}
+
+TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
+{
+    auto dbPath = std::filesystem::current_path().parent_path() / "test_rdef_reopen.db";
+    std::filesystem::remove(dbPath);
+
+    {
+        sqlite::SQLiteDatabase db;
+        ASSERT_NO_THROW(db.Open(dbPath, "testpass"));
+    }
+
+    sqlite::SQLiteDatabase db2;
+    ASSERT_NO_THROW(db2.Open(dbPath, "testpass"));
+
+    auto defs = db2.GetResourcesDefinition();
+
+    ASSERT_EQ(5u, defs.size());
+    EXPECT_EQ("Name",     defs[0].name);
+    EXPECT_EQ("Password", defs[3].name);
+    EXPECT_TRUE(defs[3].big);
 }
 
 TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)

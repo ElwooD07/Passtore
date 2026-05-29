@@ -6,7 +6,9 @@ using namespace passtore;
 
 static void SeedFakeData(IResourceStorage* storage)
 {
-    if (storage->GetResourcesCount() > 0) {
+    Resource probe;
+    if (storage->GetNext(InvalidResourceId, probe) == ResourceState::Present)
+    {
         return;
     }
 
@@ -35,6 +37,12 @@ int main(int argc, char* argv[])
 {
     try
     {
+        // Step 13: neutral palette — light gray background, near-white inputs
+        Fl::scheme("gtk+");
+        Fl::background(235, 235, 235);
+        Fl::background2(252, 252, 252);
+        Fl::foreground(20, 20, 20);
+
         std::filesystem::path dbPath = "passtore.db";
         std::filesystem::path settingsPath = "passtore.json";
 

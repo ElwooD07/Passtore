@@ -228,21 +228,55 @@ void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
 
 ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
 {
-    // TODO: persist and load resource definitions from database
-    return {
+    auto query = m_db.CreateQuery(
+        "SELECT name, big, visible FROM ResourceDefinitions ORDER BY sort_order ASC;");
+
+    ResourcesDefinition result;
+    while (query.Step())
+    {
+        ResourceDefinition def;
+        query.ColumnText(0, def.name);
+        def.big     = query.ColumnInt(1) != 0;
+        def.visible = query.ColumnInt(2) != 0;
+        result.push_back(std::move(def));
+    }
+    return result;
+}
+
+void sqlite::SQLiteDatabase::EnsureResourceDefinitionsTable()
+{
+    m_db.ExecQuery(
+        "CREATE TABLE IF NOT EXISTS ResourceDefinitions ("
+        "  id         INTEGER PRIMARY KEY,"
+        "  name       TEXT NOT NULL UNIQUE,"
+        "  big        INTEGER NOT NULL DEFAULT 0,"
+        "  visible    INTEGER NOT NULL DEFAULT 1,"
+        "  sort_order INTEGER NOT NULL DEFAULT 0"
+        ");");
+}
+
+void sqlite::SQLiteDatabase::SeedDefaultResourceDefinitions()
+{
+    const ResourcesDefinition defaults = {
         { "Name",     false },
         { "URL",      false },
         { "Login",    false },
-        { "Password", true  },  // big=true -> blurred in table
+        { "Password", true  },
         { "Notes",    false },
     };
-}
 
-ResourceId sqlite::SQLiteDatabase::GetResourcesCount()
-{
-    auto query = m_db.CreateQuery("SELECT count(*) FROM Resources;");
-    query.Step();
-    return static_cast<ResourceId>(query.ColumnInt(0));
+    static const std::string s_insertStr(
+        "INSERT INTO ResourceDefinitions (name, big, visible, sort_order) "
+        "VALUES (?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM ResourceDefinitions));");
+
+    for (const auto& def : defaults)
+    {
+        auto q = m_db.CreateQuery(s_insertStr);
+        q.BindText(1, def.name);
+        q.BindInt(2, def.big     ? 1 : 0);
+        q.BindInt(3, def.visible ? 1 : 0);
+        q.Step();
+    }
 }
 
 void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
@@ -255,36 +289,33 @@ void sqlite::SQLiteDatabase::BuildOpenedDb(const std::string& password)
     ChangePassword("", password);
 
     m_db.ExecQuery("CREATE TABLE 'Resources' ('RowId' INTEGER PRIMARY KEY, 'Data' BLOB);");
+    EnsureResourceDefinitionsTable();
+    SeedDefaultResourceDefinitions();
 }
 
-void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
+void sqlite::SQLiteDatabase::ReadMetadata(
+    Data& salt, Data& phrase, Data& phraseHmac,
+    Data& encryptedKeys, Data& keysHmac)
 {
     auto query = m_db.CreateQuery("SELECT count(*), salt, phrase, phrase_hmac, keys, keys_hmac FROM Metadata;");
     query.Step();
 
-    auto rowsCount = query.ColumnInt(0);
-
-    if (rowsCount != 1)
+    if (query.ColumnInt(0) != 1)
     {
         throw std::runtime_error("The database has wrong scheme or corrupted");
     }
 
-    Data salt;
     query.ColumnBlob(1, salt);
-    Data phrase;
     query.ColumnBlob(2, phrase);
-    Data phraseHmac;
     query.ColumnBlob(3, phraseHmac);
-    Data encryptedKeys;
     query.ColumnBlob(4, encryptedKeys);
-    Data keysHmac;
     query.ColumnBlob(5, keysHmac);
+}
 
-    Data passwordKey = DerivePasswordKey(password, salt);
-    SensitiveData passwordKeyMaterial;
-    passwordKeyMaterial.Assign(Secret(passwordKey.data(), passwordKey.size()));
-
-    // Verify HMAC on phrase to ensure integrity and correct password
+void sqlite::SQLiteDatabase::VerifyPhrase(
+    const Data& phrase, const Data& phraseHmac,
+    const Data& passwordKey, const SensitiveData& passwordKeyMaterial)
+{
     Data phraseHmacComputed = ComputeHmac(phrase, passwordKey);
     if (phraseHmac.size() != phraseHmacComputed.size() ||
         memcmp(phraseHmac.data(), phraseHmacComputed.data(), phraseHmac.size()) != 0)
@@ -307,8 +338,12 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
     {
         throw std::runtime_error("Invalid password");
     }
+}
 
-    // Verify HMAC on keys
+void sqlite::SQLiteDatabase::DecryptMasterKey(
+    const Data& encryptedKeys, const Data& keysHmac,
+    const Data& passwordKey, const SensitiveData& passwordKeyMaterial)
+{
     Data keysHmacComputed = ComputeHmac(encryptedKeys, passwordKey);
     if (keysHmac.size() != keysHmacComputed.size() ||
         memcmp(keysHmac.data(), keysHmacComputed.data(), keysHmac.size()) != 0)
@@ -327,6 +362,20 @@ void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
     }
 
     m_key.Assign(Secret(decryptedKeyView.data(), kKeySize));
+}
+
+void sqlite::SQLiteDatabase::InitOpenedDb(const std::string& password)
+{
+    Data salt, phrase, phraseHmac, encryptedKeys, keysHmac;
+    ReadMetadata(salt, phrase, phraseHmac, encryptedKeys, keysHmac);
+
+    Data passwordKey = DerivePasswordKey(password, salt);
+    SensitiveData passwordKeyMaterial;
+    passwordKeyMaterial.Assign(Secret(passwordKey.data(), passwordKey.size()));
+
+    VerifyPhrase(phrase, phraseHmac, passwordKey, passwordKeyMaterial);
+    DecryptMasterKey(encryptedKeys, keysHmac, passwordKey, passwordKeyMaterial);
+
     SecureWipe(passwordKey.data(), passwordKey.size());
     SecureWipe(encryptedKeys.data(), encryptedKeys.size());
 }

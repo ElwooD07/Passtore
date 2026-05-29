@@ -3,6 +3,7 @@
 set(PASSTORE_SOURCES
     Models/ResourceTableModel.cpp
     Settings.cpp
+    Widgets/ChangePasswordDialog.cpp
     Widgets/ColumnSettingsWidget.cpp
     Widgets/MainWindow.cpp
     Widgets/ResourcesListWidget.cpp
@@ -17,6 +18,7 @@ set(PASSTORE_HEADERS
     Models/ResourceTableModel.h
     Models/ResourceTableModelRoles.h
     Settings.h
+    Widgets/ChangePasswordDialog.h
     Widgets/ColumnSettingsWidget.h
     Widgets/MainWindow.h
     Widgets/ResourcesListWidget.h
