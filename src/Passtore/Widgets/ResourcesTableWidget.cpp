@@ -3,17 +3,16 @@
 
 using namespace passtore;
 
-static const int FONT_SIZE  = 13;
-static const int ROW_H      = FONT_SIZE * 2;      // 26
-static const int HDR_H      = FONT_SIZE * 2;      // 26
-static const int BTN_H      = FONT_SIZE * 2 + 4;  // 30
-static const int BTN_W      = 80;
-static const int BTN_GAP    = 4;
-static const int COL_W_NORM = 150;  // default column width
-static const int COL_W_BIG  = 220;  // wider for big (multiline) columns
+static const int s_fontSize = 13;
+static const int s_rowH     = s_fontSize * 2;
+static const int s_hdrH     = s_fontSize * 2;
+static const int s_btnH     = s_fontSize * 2 + 4;
+static const int s_btnW     = 80;
+static const int s_btnGap   = 4;
+static const int s_colWNorm = 150;
+static const int s_colWBig  = 220;
 
-// ─── Inner table widget ────────────────────────────────────────────────────
-
+/* Fl_Table_Row subclass that renders the resource grid and drives inline cell editing. */
 class passtore::ResourcesTable : public Fl_Table_Row
 {
 public:
@@ -21,9 +20,9 @@ public:
         : Fl_Table_Row(x, y, w, h)
     {
         col_header(1);
-        col_header_height(HDR_H);
-        row_height_all(ROW_H);
-        col_width_all(COL_W_NORM);
+        col_header_height(s_hdrH);
+        row_height_all(s_rowH);
+        col_width_all(s_colWNorm);
         col_resize(1);
         row_resize(0);
         type(SELECT_SINGLE);
@@ -33,38 +32,38 @@ public:
         m_editor->hide();
         m_editor->box(FL_BORDER_BOX);
         m_editor->textfont(FL_HELVETICA);
-        m_editor->textsize(FONT_SIZE);
+        m_editor->textsize(s_fontSize);
         m_bigEditor = new Fl_Multiline_Input(0, 0, 0, 0);
         m_bigEditor->hide();
         m_bigEditor->box(FL_BORDER_BOX);
         m_bigEditor->textfont(FL_COURIER);
-        m_bigEditor->textsize(FONT_SIZE);
+        m_bigEditor->textsize(s_fontSize);
         end();
     }
 
-    ~ResourcesTable() { cancelEdit(); }
+    ~ResourcesTable() { CancelEdit(); }
 
-    void setModel(ITableModel* model)
+    void SetModel(ITableModel* model)
     {
         m_model = model;
-        redistributeColumns();
-        refresh();
+        RedistributeColumns();
+        Refresh();
     }
 
     void resize(int x, int y, int w, int h) override
     {
         Fl_Table_Row::resize(x, y, w, h);
-        redistributeColumns();
+        RedistributeColumns();
     }
 
-    void refresh()
+    void Refresh()
     {
-        rows(m_model ? m_model->rowCount()    : 0);
-        cols(m_model ? m_model->columnCount() : 0);
+        rows(m_model ? m_model->RowCount()    : 0);
+        cols(m_model ? m_model->ColumnCount() : 0);
         redraw();
     }
 
-    int selectedRow()
+    int SelectedRow()
     {
         for (int r = 0; r < rows(); ++r) {
             if (row_selected(r)) {
@@ -80,7 +79,7 @@ protected:
         switch (ctx)
         {
         case CONTEXT_STARTPAGE:
-            fl_font(FL_HELVETICA, FONT_SIZE);
+            fl_font(FL_HELVETICA, s_fontSize);
             return;
 
         case CONTEXT_COL_HEADER:
@@ -89,8 +88,8 @@ protected:
             if (m_model)
             {
                 fl_color(FL_FOREGROUND_COLOR);
-                fl_font(FL_HELVETICA_BOLD, FONT_SIZE);
-                fl_draw(m_model->columnName(C).c_str(), X, Y, W, H, FL_ALIGN_CENTER | FL_ALIGN_CLIP);
+                fl_font(FL_HELVETICA_BOLD, s_fontSize);
+                fl_draw(m_model->ColumnName(C).c_str(), X, Y, W, H, FL_ALIGN_CENTER | FL_ALIGN_CLIP);
             }
             fl_pop_clip();
             return;
@@ -107,13 +106,13 @@ protected:
 
                 if (m_model)
                 {
-                    std::string data = m_model->cellData(R, C);
-                    std::string display = (!m_model->isVisibleColumn(C) && !data.empty())
+                    std::string data = m_model->CellData(R, C);
+                    std::string display = (!m_model->IsVisibleColumn(C) && !data.empty())
                         ? std::string(data.size(), '*') : data;
                     std::fill(data.begin(), data.end(), '\0');
 
                     fl_color(row_selected(R) ? FL_WHITE : FL_FOREGROUND_COLOR);
-                    fl_font(FL_HELVETICA, FONT_SIZE);
+                    fl_font(FL_HELVETICA, s_fontSize);
                     fl_draw(display.c_str(), X + 4, Y, W - 8, H, FL_ALIGN_LEFT | FL_ALIGN_CLIP);
                     std::fill(display.begin(), display.end(), '\0');
                 }
@@ -144,7 +143,7 @@ protected:
                 {
                     int cx, cy, cw, ch;
                     find_cell(CONTEXT_CELL, R, C, cx, cy, cw, ch);
-                    startEditing(R, C, cx, cy, cw, ch);
+                    StartEditing(R, C, cx, cy, cw, ch);
                     return 1;
                 }
             }
@@ -153,11 +152,11 @@ protected:
         case FL_KEYDOWN:
             if (m_editRow >= 0) {
                 if (Fl::event_key() == FL_Escape) {
-                    cancelEdit();
+                    CancelEdit();
                     return 1;
                 }
-                if (Fl::event_key() == FL_Enter && m_model && !m_model->isBigColumn(m_editCol)) {
-                    commitEdit();
+                if (Fl::event_key() == FL_Enter && m_model && !m_model->IsBigColumn(m_editCol)) {
+                    CommitEdit();
                     return 1;
                 }
             }
@@ -168,16 +167,16 @@ protected:
     }
 
 private:
-    void startEditing(int row, int col, int x, int y, int w, int h)
+    void StartEditing(int row, int col, int x, int y, int w, int h)
     {
         if (m_editRow >= 0) {
-            commitEdit();
+            CommitEdit();
         }
         m_editRow = row;
         m_editCol = col;
 
-        bool big = m_model && m_model->isBigColumn(col);
-        std::string current = m_model ? m_model->cellData(row, col) : "";
+        bool big = m_model && m_model->IsBigColumn(col);
+        std::string current = m_model ? m_model->CellData(row, col) : "";
 
         if (big)
         {
@@ -196,18 +195,18 @@ private:
         std::fill(current.begin(), current.end(), '\0');
     }
 
-    void commitEdit()
+    void CommitEdit()
     {
         if (m_editRow < 0 || !m_model) {
             return;
         }
 
-        bool big = m_model->isBigColumn(m_editCol);
+        bool big = m_model->IsBigColumn(m_editCol);
         Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor)
                                 : static_cast<Fl_Input_*>(m_editor);
 
         std::string newValue(active->value());
-        m_model->setCellData(m_editRow, m_editCol, newValue);
+        m_model->SetCellData(m_editRow, m_editCol, newValue);
         std::fill(newValue.begin(), newValue.end(), '\0');
 
         active->value("");
@@ -217,13 +216,13 @@ private:
         redraw();
     }
 
-    void cancelEdit()
+    void CancelEdit()
     {
         if (m_editRow < 0) {
             return;
         }
 
-        bool big = m_model && m_model->isBigColumn(m_editCol);
+        bool big = m_model && m_model->IsBigColumn(m_editCol);
         Fl_Input_* active = big ? static_cast<Fl_Input_*>(m_bigEditor)
                                 : static_cast<Fl_Input_*>(m_editor);
         active->value("");
@@ -233,18 +232,18 @@ private:
         redraw();
     }
 
-    void redistributeColumns()
+    void RedistributeColumns()
     {
-        if (!m_model || m_model->columnCount() == 0)
+        if (!m_model || m_model->ColumnCount() == 0)
         {
             return;
         }
 
-        int nCols = m_model->columnCount();
+        int nCols = m_model->ColumnCount();
         int naturalTotal = 0;
         for (int c = 0; c < nCols; ++c)
         {
-            naturalTotal += m_model->isBigColumn(c) ? COL_W_BIG : COL_W_NORM;
+            naturalTotal += m_model->IsBigColumn(c) ? s_colWBig : s_colWNorm;
         }
 
         int available = w();
@@ -254,7 +253,7 @@ private:
             int distributed = 0;
             for (int c = 0; c < nCols - 1; ++c)
             {
-                int nat = m_model->isBigColumn(c) ? COL_W_BIG : COL_W_NORM;
+                int nat = m_model->IsBigColumn(c) ? s_colWBig : s_colWNorm;
                 int cw = nat * available / naturalTotal;
                 col_width(c, cw);
                 distributed += cw;
@@ -267,16 +266,16 @@ private:
             // restore natural widths; Fl_Table_Row shows horizontal scrollbar automatically
             for (int c = 0; c < nCols; ++c)
             {
-                col_width(c, m_model->isBigColumn(c) ? COL_W_BIG : COL_W_NORM);
+                col_width(c, m_model->IsBigColumn(c) ? s_colWBig : s_colWNorm);
             }
         }
     }
 
-    ITableModel*         m_model    = nullptr;
-    Fl_Input*            m_editor   = nullptr;
-    Fl_Multiline_Input*  m_bigEditor = nullptr;
-    int                  m_editRow  = -1;
-    int                  m_editCol  = -1;
+    ITableModel* m_model = nullptr;
+    Fl_Input* m_editor = nullptr;
+    Fl_Multiline_Input* m_bigEditor = nullptr;
+    int m_editRow = -1;
+    int m_editCol = -1;
 };
 
 // ─── Container widget ──────────────────────────────────────────────────────
@@ -286,29 +285,29 @@ ResourcesTableWidget::ResourcesTableWidget(int x, int y, int w, int h)
 {
     begin();
 
-    int tableH = h - BTN_GAP - BTN_H - BTN_GAP;
+    int tableH = h - s_btnGap - s_btnH - s_btnGap;
     m_tableWidget = new ResourcesTable(x, y, w, tableH);
 
-    int btnY = y + tableH + BTN_GAP;
-    m_btnDelete = new Fl_Button(x,             btnY, BTN_W, BTN_H, "Delete");
+    int btnY = y + tableH + s_btnGap;
+    m_btnDelete = new Fl_Button(x,             btnY, s_btnW, s_btnH, "Delete");
     m_btnDelete->callback(onDelete, this);
 
-    m_btnAdd    = new Fl_Button(x + w - BTN_W, btnY, BTN_W, BTN_H, "Add");
+    m_btnAdd    = new Fl_Button(x + w - s_btnW, btnY, s_btnW, s_btnH, "Add");
     m_btnAdd->callback(onAdd, this);
 
     end();
     resizable(m_tableWidget);
 }
 
-void ResourcesTableWidget::setModel(ITableModel* model)
+void ResourcesTableWidget::SetModel(ITableModel* model)
 {
     m_model = model;
-    m_tableWidget->setModel(model);
+    m_tableWidget->SetModel(model);
 }
 
-void ResourcesTableWidget::refresh()
+void ResourcesTableWidget::Refresh()
 {
-    m_tableWidget->refresh();
+    m_tableWidget->Refresh();
 }
 
 void ResourcesTableWidget::onAdd(Fl_Widget*, void* ctx)
@@ -316,19 +315,19 @@ void ResourcesTableWidget::onAdd(Fl_Widget*, void* ctx)
     auto* self = static_cast<ResourcesTableWidget*>(ctx);
     if (self->m_model)
     {
-        self->m_model->addRow();
-        self->m_tableWidget->refresh();
+        self->m_model->AddRow();
+        self->m_tableWidget->Refresh();
     }
 }
 
 void ResourcesTableWidget::onDelete(Fl_Widget*, void* ctx)
 {
     auto* self = static_cast<ResourcesTableWidget*>(ctx);
-    int row = self->m_tableWidget->selectedRow();
+    int row = self->m_tableWidget->SelectedRow();
     if (row < 0 || !self->m_model) {
         return;
     }
-    self->m_model->deleteRow(row);
-    self->m_tableWidget->refresh();
+    self->m_model->DeleteRow(row);
+    self->m_tableWidget->Refresh();
 }
 

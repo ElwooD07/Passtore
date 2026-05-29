@@ -3,10 +3,10 @@
 
 using namespace passtore;
 
-static const int ROW_H = 32;
+static const int s_rowH = 32;
 
 ColumnSettingsWidget::ColumnSettingsWidget(int x, int y, int w, const ColumnSettings& sets)
-    : Fl_Group(x, y, w, ROW_H)
+    : Fl_Group(x, y, w, s_rowH)
     , m_name(sets.name)
 {
     begin();
@@ -21,7 +21,7 @@ ColumnSettingsWidget::ColumnSettingsWidget(int x, int y, int w, const ColumnSett
     box(FL_FLAT_BOX);
 }
 
-ColumnSettings ColumnSettingsWidget::getSets() const
+ColumnSettings ColumnSettingsWidget::GetSets() const
 {
     return ColumnSettings{ m_name, m_chkVisible->value() != 0 };
 }

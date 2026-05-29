@@ -4,15 +4,17 @@
 
 namespace passtore
 {
+    /* A single field definition from the DB — describes name, layout hints, and masking behaviour. */
     struct ResourceDefinition
     {
         std::string name;
-        bool big     = false;  // multiline text editor
-        bool visible = true;   // false = content masked with asterisks
+        bool big     = false;
+        bool visible = true;
     };
     using ResourcesDefinition = std::vector<ResourceDefinition>;
 
-class IResourceStorage
+    /* Abstract storage backend — implemented by SQLiteDatabase; consumed by ResourceTableModel. */
+    class IResourceStorage
     {
     public:
         virtual ~IResourceStorage() { }

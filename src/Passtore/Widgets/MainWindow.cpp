@@ -8,13 +8,13 @@
 
 using namespace passtore;
 
-static const int MENU_H   = 25;
-static const int STATUS_H = 22;
-static const int WIN_W    = 722;
-static const int WIN_H    = 421;
+static const int s_menuH   = 25;
+static const int s_statusH = 22;
+static const int s_winW    = 722;
+static const int s_winH    = 421;
 
 MainWindow::MainWindow(IResourceStorage* storage, const std::filesystem::path& settingsPath)
-    : Fl_Window(WIN_W, WIN_H, PRODUCT_NAME)
+    : Fl_Window(s_winW, s_winH, PRODUCT_NAME)
     , m_storage(storage)
     , m_settingsPath(settingsPath)
 {
@@ -24,19 +24,19 @@ MainWindow::MainWindow(IResourceStorage* storage, const std::filesystem::path& s
     size_range(600, 360);
     begin();
 
-    auto* menu = new Fl_Menu_Bar(0, 0, WIN_W, MENU_H);
+    auto* menu = new Fl_Menu_Bar(0, 0, s_winW, s_menuH);
     menu->add("File/Settings",         0, onSettings,        this);
     menu->add("File/Change Password",  0, onChangePassword,  this);
     menu->add("File/Exit",             0, [](Fl_Widget*, void*){ exit(0); }, nullptr);
 
-    int listH = WIN_H - MENU_H - STATUS_H;
+    int listH = s_winH - s_menuH - s_statusH;
     m_model = new ResourceTableModel(storage);
-    m_model->setErrorCallback(onError, this);
+    m_model->SetErrorCallback(onError, this);
 
-    m_listWidget = new ResourcesTableWidget(0, MENU_H, WIN_W, listH);
-    m_listWidget->setModel(m_model);
+    m_listWidget = new ResourcesTableWidget(0, s_menuH, s_winW, listH);
+    m_listWidget->SetModel(m_model);
 
-    m_statusBar = new Fl_Box(0, MENU_H + listH, WIN_W, STATUS_H);
+    m_statusBar = new Fl_Box(0, s_menuH + listH, s_winW, s_statusH);
     m_statusBar->box(FL_FLAT_BOX);
     m_statusBar->color(FL_BACKGROUND_COLOR);
     m_statusBar->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -62,7 +62,7 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
     {
         Fl::wait();
     }
-    self->m_settings.table = dlg.getTableSettings();
+    self->m_settings.table = dlg.GetTableSettings();
     self->m_settings.Save(self->m_settingsPath);
 }
 

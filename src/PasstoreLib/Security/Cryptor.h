@@ -8,9 +8,8 @@
 
 namespace passtore
 {
-    // Uses AES 256 in CBC mode to encrypt/decrypt data and targeted on crypting strings,
-    // so the end of decrypted message is determined by null symbol
-    // It uses the pair of AES KEY and IV placed in the single container consecutively
+    /* AES-256-CBC encrypt/decrypt helper; the null terminator marks the end of decrypted string data.
+       Key and IV are stored consecutively in a single Secret span. */
     class Cryptor
     {
     public:

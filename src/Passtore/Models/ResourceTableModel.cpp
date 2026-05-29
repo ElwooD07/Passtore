@@ -11,17 +11,17 @@ ResourceTableModel::ResourceTableModel(IResourceStorage* storage)
     RefreshIds();
 }
 
-int ResourceTableModel::rowCount() const
+int ResourceTableModel::RowCount() const
 {
     return static_cast<int>(m_ids.size());
 }
 
-int ResourceTableModel::columnCount() const
+int ResourceTableModel::ColumnCount() const
 {
     return static_cast<int>(m_resourcesDefs.size());
 }
 
-std::string ResourceTableModel::cellData(int row, int col) const
+std::string ResourceTableModel::CellData(int row, int col) const
 {
     try
     {
@@ -39,7 +39,7 @@ std::string ResourceTableModel::cellData(int row, int col) const
     return {};
 }
 
-bool ResourceTableModel::isBigColumn(int col) const
+bool ResourceTableModel::IsBigColumn(int col) const
 {
     if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
         return false;
@@ -47,7 +47,7 @@ bool ResourceTableModel::isBigColumn(int col) const
     return m_resourcesDefs[col].big;
 }
 
-bool ResourceTableModel::isVisibleColumn(int col) const
+bool ResourceTableModel::IsVisibleColumn(int col) const
 {
     if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
         return true;
@@ -55,7 +55,7 @@ bool ResourceTableModel::isVisibleColumn(int col) const
     return m_resourcesDefs[col].visible;
 }
 
-std::string ResourceTableModel::columnName(int col) const
+std::string ResourceTableModel::ColumnName(int col) const
 {
     if (col < 0 || col >= static_cast<int>(m_resourcesDefs.size())) {
         return {};
@@ -63,13 +63,13 @@ std::string ResourceTableModel::columnName(int col) const
     return m_resourcesDefs[col].name;
 }
 
-std::string ResourceTableModel::rowSubject(int row) const
+std::string ResourceTableModel::RowSubject(int row) const
 {
     auto* res = GetResource(row);
     return res ? res->subject : std::string{};
 }
 
-bool ResourceTableModel::setCellData(int row, int col, const std::string& value)
+bool ResourceTableModel::SetCellData(int row, int col, const std::string& value)
 {
     try
     {
@@ -93,13 +93,13 @@ bool ResourceTableModel::setCellData(int row, int col, const std::string& value)
     return false;
 }
 
-ResourceId ResourceTableModel::rowId(int row) const
+ResourceId ResourceTableModel::RowId(int row) const
 {
     auto* res = GetResource(row);
     return res ? res->id : InvalidResourceId;
 }
 
-int ResourceTableModel::addRow()
+int ResourceTableModel::AddRow()
 {
     try
     {
@@ -122,11 +122,11 @@ int ResourceTableModel::addRow()
     return -1;
 }
 
-bool ResourceTableModel::deleteRow(int row)
+bool ResourceTableModel::DeleteRow(int row)
 {
     try
     {
-        ResourceId id = rowId(row);
+        ResourceId id = RowId(row);
         if (id == InvalidResourceId) {
             return false;
         }
@@ -144,7 +144,7 @@ bool ResourceTableModel::deleteRow(int row)
     return false;
 }
 
-void ResourceTableModel::setErrorCallback(ErrorCallback cb, void* ctx)
+void ResourceTableModel::SetErrorCallback(ErrorCallback cb, void* ctx)
 {
     m_errorCb = cb;
     m_errorCtx = ctx;

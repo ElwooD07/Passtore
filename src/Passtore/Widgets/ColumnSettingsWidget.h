@@ -7,16 +7,16 @@
 
 namespace passtore
 {
-    // Single row in SettingsDialog — label | Visible checkbox
+    /* Single settings row: a label showing the column name and a Visible checkbox. */
     class ColumnSettingsWidget : public Fl_Group
     {
     public:
         ColumnSettingsWidget(int x, int y, int w, const ColumnSettings& sets);
-        ColumnSettings getSets() const;
+        ColumnSettings GetSets() const;
 
     private:
-        Fl_Box*          m_lblName;
+        Fl_Box* m_lblName;
         Fl_Check_Button* m_chkVisible;
-        std::string      m_name;
+        std::string m_name;
     };
 }

@@ -5,26 +5,25 @@
 
 namespace passtore
 {
-    class ResourcesTable;  // inner Fl_Table_Row — defined in .cpp
+    class ResourcesTable;
 
-    // Container matching the original Qt ResourcesTableWidget layout:
-    // table fills the area, Delete button bottom-left, Add button bottom-right.
+    /* FLTK container: ResourcesTable fills the top area, Delete button bottom-left, Add button bottom-right. */
     class ResourcesTableWidget : public Fl_Group
     {
     public:
         ResourcesTableWidget(int x, int y, int w, int h);
 
-        void setModel(ITableModel* model);
-        void refresh();
+        void SetModel(ITableModel* model);
+        void Refresh();
 
     private:
         static void onAdd(Fl_Widget*, void* ctx);
         static void onDelete(Fl_Widget*, void* ctx);
 
     private:
-        ITableModel*    m_model = nullptr;
+        ITableModel* m_model = nullptr;
         ResourcesTable* m_tableWidget;
-        Fl_Button*      m_btnDelete;
-        Fl_Button*      m_btnAdd;
+        Fl_Button* m_btnDelete;
+        Fl_Button* m_btnAdd;
     };
 }

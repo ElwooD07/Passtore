@@ -5,7 +5,7 @@
 
 namespace passtore
 {
-    // Not thread safe. LRU eviction policy.
+    /* Fixed-capacity LRU cache. Not thread-safe. */
     template<typename K, class T>
     class Cache
     {

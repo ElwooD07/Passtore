@@ -6,23 +6,23 @@ using namespace passtore;
 
 void sqlite::detail::CreateNewSavepointName(std::string& name)
 {
-    static const char minLetter = 'a';
-    static const char maxLetter = 'z';
+    static const char s_minLetter = 'a';
+    static const char s_maxLetter = 'z';
 
     if (name.empty())
     {
-        name = minLetter;
+        name = s_minLetter;
     }
     else
     {
         char& lastLetter = name.back();
-        if (name.back() != maxLetter)
+        if (name.back() != s_maxLetter)
         {
             ++lastLetter;
         }
         else
         {
-            name += minLetter;
+            name += s_minLetter;
         }
     }
 }

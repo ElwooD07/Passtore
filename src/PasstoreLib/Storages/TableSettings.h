@@ -5,12 +5,16 @@
 
 namespace passtore
 {
+    // TODO: merge ColumnSettings::visible (hide column) with ResourceDefinition::visible (mask content)
+    //       into a unified per-column descriptor once the distinction is reflected in the UI.
+    /* Per-column user preference: name mirrors ResourceDefinition::name, visible controls rendering. */
     struct ColumnSettings
     {
         std::string name;
         bool visible = true;
     };
 
+    /* Serialisable user preferences for the resource table — column visibility overrides. */
     struct TableSettings
     {
         std::vector<ColumnSettings> columns;

@@ -8,6 +8,7 @@
 
 namespace passtore
 {
+    /* Heap-allocated sensitive buffer that is securely wiped on destruction and move; non-copyable. */
     class SensitiveData
     {
     public:

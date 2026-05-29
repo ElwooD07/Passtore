@@ -11,6 +11,7 @@ namespace passtore
     class ResourceTableModel;
     class ResourcesTableWidget;
 
+    /* Top-level application window: menu bar, resource table, and status bar. */
     class MainWindow : public Fl_Window
     {
     public:
@@ -22,11 +23,11 @@ namespace passtore
         static void onChangePassword(Fl_Widget*, void* ctx);
 
     private:
-        IResourceStorage*      m_storage;
-        ResourceTableModel*    m_model;
-        ResourcesTableWidget*   m_listWidget;
-        Fl_Box*                m_statusBar;
-        Settings               m_settings;
-        std::filesystem::path  m_settingsPath;
+        IResourceStorage* m_storage;
+        ResourceTableModel* m_model;
+        ResourcesTableWidget* m_listWidget;
+        Fl_Box* m_statusBar;
+        Settings m_settings;
+        std::filesystem::path m_settingsPath;
     };
 }

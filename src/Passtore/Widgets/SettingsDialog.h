@@ -11,11 +11,12 @@
 
 namespace passtore
 {
+    /* Modal settings dialog: displays per-column visibility controls for the resource table. */
     class SettingsDialog : public Fl_Window
     {
     public:
         SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current);
-        TableSettings getTableSettings() const;
+        TableSettings GetTableSettings() const;
 
     private:
         static void onSave(Fl_Widget*, void* ctx);

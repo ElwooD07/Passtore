@@ -4,6 +4,7 @@
 
 namespace passtore
 {
+    /* Top-level user settings loaded from and saved to a JSON file alongside the DB. */
     struct Settings
     {
         TableSettings table;

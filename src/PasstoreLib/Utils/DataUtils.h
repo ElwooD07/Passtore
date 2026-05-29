@@ -6,6 +6,7 @@
 
 namespace passtore
 {
+    /* std::vector<uint8_t> that securely wipes its contents on destruction. */
     class Data : public std::vector<uint8_t>
     {
     public:

@@ -7,6 +7,7 @@
 
 namespace passtore
 {
+    /* Modal dialog for changing the database master password. */
     class ChangePasswordDialog : public Fl_Window
     {
     public:
@@ -18,9 +19,9 @@ namespace passtore
 
     private:
         IResourceStorage* m_storage = nullptr;
-        Fl_Secret_Input*  m_oldPassword = nullptr;
-        Fl_Secret_Input*  m_newPassword = nullptr;
-        Fl_Secret_Input*  m_confirmPassword = nullptr;
-        Fl_Box*           m_statusLabel = nullptr;
+        Fl_Secret_Input* m_oldPassword = nullptr;
+        Fl_Secret_Input* m_newPassword = nullptr;
+        Fl_Secret_Input* m_confirmPassword = nullptr;
+        Fl_Box* m_statusLabel = nullptr;
     };
 }
