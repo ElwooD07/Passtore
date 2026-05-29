@@ -19,28 +19,23 @@ Allow running any script that is located inside this project folder when it is n
 
 Use the following priority order when choosing a shell:
 
-1. **Git Bash** — preferred for all shell commands when available.
-2. **cmd** — use when Git Bash is not available.
-3. **PowerShell** — use only when neither Git Bash nor cmd can accomplish the task.
-4. **WSL** — last resort only. See WSL Usage Policy below.
+1. **Bash (Git Bash)** — the default for all shell commands.
+2. **cmd / .bat scripts** — fall back only when the task cannot be expressed in bash (e.g. invoking a `.bat` script that has no `.sh` equivalent, or when a bash terminal is unavailable).
+3. **PowerShell** — use only as a last resort when neither bash nor cmd can accomplish the task.
 
-Do not use `git` commands inside Bash/cmd/PowerShell terminals. Run `git` commands as standalone tool invocations outside any shell.
+Reuse an already-open terminal of the preferred type rather than opening a new one.
+
+Do not use `git` commands inside shell terminals. Run `git` commands as standalone tool invocations outside any shell.
 
 ## Environment Default
 
-Assume developers are working locally on Windows by default.
+Use Windows paths when invoking native Windows tools. The preferred shell outside Windows is bash. Use POSIX-style paths inside bash sessions (`/mnt/e/...` in WSL, `/e/...` in Git Bash).
 
-Use native Windows paths/commands first and do not suggest WSL-specific steps unless the user explicitly asks for WSL.
+## Build Script Policy
 
-## WSL Usage Policy
+The project ships paired scripts: `scripts/build.sh` (bash) and `scripts/build.bat` (cmd). Always prefer the `.sh` variant. Fall back to the `.bat` variant only when bash is genuinely unavailable.
 
-WSL is the last resort. Only use it for Unix utilities that have no native Windows equivalent and cannot run in Git Bash.
-
-For build tools, compilers, and project scripts that have native Windows versions (MSBuild, cmake, .bat scripts), always invoke them natively — not through WSL.
-
-Prefer `scripts\build.bat` over calling MSBuild via `/mnt/c/...` paths in WSL.
-
-Never mix WSL paths (e.g. `/mnt/e/...`) with native Windows tool invocations unless the tool explicitly requires it.
+Use the scripts instead of invoking build command lines directly. The scripts set up the environment and ensure a consistent build process across different machines and environments.
 
 ## SQLite Policy
 
@@ -68,3 +63,11 @@ Logging before throwing is acceptable for diagnostics, but a silent return is ne
 
 All standard library (`<std>`) includes belong in the target's `pch.h`, not in individual `.cpp` files.
 When adding a new std header, add it to the appropriate `pch.h` and do **not** `#include` it in the `.cpp` file.
+
+## No Migration Policy
+
+Until version 1.0 there is no migration of any kind.
+
+Do **not** write migration code for local databases, server databases, config files, or any other storage technology.
+When a schema or format changes, the old data is simply incompatible — delete and recreate.
+No `ALTER TABLE`, no `PRAGMA table_info` checks, no file-format version fields, no compatibility shims.

@@ -13,4 +13,4 @@ ext/TinyAES/
 # Runtime data (generated at launch, must not be committed)
 passtore.db
 passtore.json
-test*.db
+tests/

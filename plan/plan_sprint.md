@@ -1,7 +1,7 @@
 # Passtore Sprint Plan — Usable Local Product
 
 ## TL;DR
-Four areas need work to make Passtore a usable product: CRUD is broken (delete/swap are stubs), settings are not persisted, UI needs polish, and cloud extensibility needs a design analysis before any code is written. This sprint fixes the first three and produces a written design decision for the fourth.
+Three areas need work to make Passtore a usable product: CRUD is broken (delete/swap are stubs), settings are not persisted, and UI needs polish. A fourth track produces a written design decision for cloud extensibility. Dynamic column management has been deferred — there is no concrete user story that justifies it today.
 
 ---
 
@@ -28,17 +28,7 @@ Four areas need work to make Passtore a usable product: CRUD is broken (delete/s
 
 ---
 
-## Phase 3 — Dynamic Columns
-
-10. **Feasibility**: yes, no schema change to the `Resources` table is needed — data is stored as JSON blobs and `Resource` already supports an arbitrary tree of `ResourceValue`s. Depends on Phase 2 step 9.
-11. **Extend SettingsDialog** — add an "Add column" button in the Table tab. New columns get default `visible=true, big=false, critical=false`. Persist via `Settings::Save()` + `SQLiteDatabase::UpdateResourcesDefinition()`.
-12. **Update `IResourceStorage`** — add `AddResourceDefinition(ResourceDefinition)` and `RemoveResourceDefinition(name)` to the interface. SQLiteDatabase implements; future cloud backend must also implement.
-
-**Verification**: Add a custom column "PIN", enter data in it, reopen app — column and data present.
-
----
-
-## Phase 4 — UI Polish
+## Phase 3 — UI Polish
 
 13. **FLTK color scheme** — call `Fl::set_color()` / `Fl::background()` once at startup in `main.cpp`. Neutral palette; monospace only for password/critical fields.
 14. **Font consistency** — `FL_HELVETICA` / `FL_HELVETICA_BOLD` globally; `FL_COURIER` for big/critical cell editors.
@@ -50,7 +40,7 @@ Four areas need work to make Passtore a usable product: CRUD is broken (delete/s
 
 ---
 
-## Phase 5 — S3 Extensibility Analysis (design only, no code)
+## Phase 4 — S3 Extensibility Analysis (design only, no code)
 
 18. **Gap analysis** — `IResourceStorage` is sync-only and ROWID-ordered. Specific gaps for any cloud backend:
     - No `ListResources()` / `GetPage()` for paginated/lazy loading.
@@ -68,9 +58,8 @@ Four areas need work to make Passtore a usable product: CRUD is broken (delete/s
 ## Step Dependencies
 
 ```
-Phase 1 → Phase 2 (step 9 needs working Delete/Upsert)
-Phase 2 (step 9) → Phase 3
-Phases 1–4 run in parallel to Phase 5
+Phase 1 → Phase 2
+Phases 1–3 run in parallel to Phase 4
 ```
 
 ---
@@ -78,7 +67,7 @@ Phases 1–4 run in parallel to Phase 5
 ## Relevant Files
 
 - `src/PasstoreLib/Storages/SQLite/SQLiteDatabase.cpp` — DeleteResource, Swap, GetResourcesDefinition stubs
-- `src/PasstoreLib/Storages/IResourceStorage.h` — interface (needs AddResourceDefinition)
+- `src/PasstoreLib/Storages/IResourceStorage.h` — consumer interface; schema management is not part of it
 - `src/Passtore/Models/Cache.h` — buggy LRU, needs rewrite
 - `src/Passtore/Settings.h` / `Settings.cpp` — empty persistence layer
 - `src/Passtore/Widgets/SettingsDialog.cpp` — onSave() is a no-op
@@ -89,7 +78,7 @@ Phases 1–4 run in parallel to Phase 5
 
 ## Decisions
 
-- **Dynamic columns**: yes, feasible without schema change (JSON blobs).
+- **Dynamic columns**: deferred — no concrete user story justifies a schema editor. The fixed set (Name, URL, Login, Password, Notes) covers all current use cases. `GetResourcesDefinition()` returning persisted definitions is sufficient; `IResourceStorage` is not extended for writes.
 - **Config file**: JSON in same directory as the `.db` file.
 - **Edit UX**: inline stays; detail panel is stretch.
 - **S3 backend**: analysis only this sprint, no implementation.

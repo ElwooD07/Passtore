@@ -5,6 +5,13 @@ using namespace passtore;
 
 namespace
 {
+    std::filesystem::path TestsDir()
+    {
+        auto dir = std::filesystem::current_path() / "tests";
+        std::filesystem::create_directories(dir);
+        return dir;
+    }
+
     Resource MakeResource(
         const std::string& subject,
         const std::string& name     = {},
@@ -28,7 +35,7 @@ namespace
 
 TEST(SQLiteDatabaseTest, UpsertTest_Insert)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test.db";
+    auto dbPath = TestsDir() / "test.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -44,7 +51,7 @@ TEST(SQLiteDatabaseTest, UpsertTest_Insert)
 
 TEST(SQLiteDatabaseTest, Upsert_GetOne_RoundTrip)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_roundtrip.db";
+    auto dbPath = TestsDir() / "test_roundtrip.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -61,7 +68,7 @@ TEST(SQLiteDatabaseTest, Upsert_GetOne_RoundTrip)
 
 TEST(SQLiteDatabaseTest, ChangePassword_ReopenWithNewPassword)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_changepwd.db";
+    auto dbPath = TestsDir() / "test_changepwd.db";
     std::filesystem::remove(dbPath);
 
     {
@@ -90,7 +97,7 @@ TEST(SQLiteDatabaseTest, ChangePassword_ReopenWithNewPassword)
 
 TEST(SQLiteDatabaseTest, DeleteResource_RemovesFromDB)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_delete.db";
+    auto dbPath = TestsDir() / "test_delete.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -116,7 +123,7 @@ TEST(SQLiteDatabaseTest, DeleteResource_RemovesFromDB)
 
 TEST(SQLiteDatabaseTest, DeleteResource_PersistsAcrossReopen)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_delete_reopen.db";
+    auto dbPath = TestsDir() / "test_delete_reopen.db";
     std::filesystem::remove(dbPath);
 
     ResourceId id = InvalidResourceId;
@@ -142,7 +149,7 @@ TEST(SQLiteDatabaseTest, DeleteResource_PersistsAcrossReopen)
 
 TEST(SQLiteDatabaseTest, Swap_SameId_IsNoOp)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_swap_sameid.db";
+    auto dbPath = TestsDir() / "test_swap_sameid.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -160,7 +167,7 @@ TEST(SQLiteDatabaseTest, Swap_SameId_IsNoOp)
 
 TEST(SQLiteDatabaseTest, Swap_ExchangesData)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_swap.db";
+    auto dbPath = TestsDir() / "test_swap.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -186,7 +193,7 @@ TEST(SQLiteDatabaseTest, Swap_ExchangesData)
 
 TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_rdef_defaults.db";
+    auto dbPath = TestsDir() / "test_rdef_defaults.db";
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -204,7 +211,7 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
 
 TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_rdef_reopen.db";
+    auto dbPath = TestsDir() / "test_rdef_reopen.db";
     std::filesystem::remove(dbPath);
 
     {
@@ -225,7 +232,7 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
 
 TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)
 {
-    auto dbPath = std::filesystem::current_path().parent_path() / "test_swap_reopen.db";
+    auto dbPath = TestsDir() / "test_swap_reopen.db";
     std::filesystem::remove(dbPath);
 
     ResourceId id1 = InvalidResourceId;

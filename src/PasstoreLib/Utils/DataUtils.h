@@ -2,10 +2,17 @@
 #include <cstdint>
 #include <span>
 #include <vector>
+#include "Security/SecureMemory.h"
 
 namespace passtore
 {
-    using Data = std::vector<uint8_t>;
+    class Data : public std::vector<uint8_t>
+    {
+    public:
+        using std::vector<uint8_t>::vector;
+        ~Data() { SecureWipe(this->data(), this->size()); }
+    };
+
     using Secret = std::span<const uint8_t>;
 
     namespace utils

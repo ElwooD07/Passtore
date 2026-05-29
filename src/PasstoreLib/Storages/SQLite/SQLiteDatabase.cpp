@@ -228,19 +228,23 @@ void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
 
 ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
 {
-    auto query = m_db.CreateQuery(
-        "SELECT name, big, visible FROM ResourceDefinitions ORDER BY sort_order ASC;");
-
-    ResourcesDefinition result;
-    while (query.Step())
+    static const ResourcesDefinition s_result = [this]()
     {
-        ResourceDefinition def;
-        query.ColumnText(0, def.name);
-        def.big     = query.ColumnInt(1) != 0;
-        def.visible = query.ColumnInt(2) != 0;
-        result.push_back(std::move(def));
-    }
-    return result;
+        auto query = m_db.CreateQuery(
+            "SELECT name, big, visible FROM ResourceDefinitions ORDER BY sort_order ASC;");
+
+        ResourcesDefinition result;
+        while (query.Step())
+        {
+            ResourceDefinition def;
+            query.ColumnText(0, def.name);
+            def.big     = query.ColumnInt(1) != 0;
+            def.visible = query.ColumnInt(2) != 0;
+            result.push_back(std::move(def));
+        }
+        return result;
+    }();
+    return s_result;
 }
 
 void sqlite::SQLiteDatabase::EnsureResourceDefinitionsTable()
