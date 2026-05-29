@@ -14,7 +14,7 @@ namespace passtore
             SQLiteDatabase();
             SQLiteDatabase(const SQLiteDatabase&) = delete;
 
-            void Open(const std::filesystem::path& path, const std::string& password) override;
+            void Open(const std::string& uri, const std::string& password) override;
             void ChangePassword(const std::string& oldPassword, const std::string& newPassword) override;
 
             ResourceState GetOne(ResourceId id, Resource& resource) override;

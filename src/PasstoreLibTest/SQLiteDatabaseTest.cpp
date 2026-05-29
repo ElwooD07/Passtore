@@ -35,7 +35,7 @@ namespace
 
 TEST(SQLiteDatabaseTest, UpsertTest_Insert)
 {
-    auto dbPath = TestsDir() / "test.db";
+    std::string dbPath = (TestsDir() / "test.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -51,7 +51,7 @@ TEST(SQLiteDatabaseTest, UpsertTest_Insert)
 
 TEST(SQLiteDatabaseTest, Upsert_GetOne_RoundTrip)
 {
-    auto dbPath = TestsDir() / "test_roundtrip.db";
+    std::string dbPath = (TestsDir() / "test_roundtrip.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -68,7 +68,7 @@ TEST(SQLiteDatabaseTest, Upsert_GetOne_RoundTrip)
 
 TEST(SQLiteDatabaseTest, ChangePassword_ReopenWithNewPassword)
 {
-    auto dbPath = TestsDir() / "test_changepwd.db";
+    std::string dbPath = (TestsDir() / "test_changepwd.db").string();
     std::filesystem::remove(dbPath);
 
     {
@@ -97,7 +97,7 @@ TEST(SQLiteDatabaseTest, ChangePassword_ReopenWithNewPassword)
 
 TEST(SQLiteDatabaseTest, DeleteResource_RemovesFromDB)
 {
-    auto dbPath = TestsDir() / "test_delete.db";
+    std::string dbPath = (TestsDir() / "test_delete.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -123,7 +123,7 @@ TEST(SQLiteDatabaseTest, DeleteResource_RemovesFromDB)
 
 TEST(SQLiteDatabaseTest, DeleteResource_PersistsAcrossReopen)
 {
-    auto dbPath = TestsDir() / "test_delete_reopen.db";
+    std::string dbPath = (TestsDir() / "test_delete_reopen.db").string();
     std::filesystem::remove(dbPath);
 
     ResourceId id = InvalidResourceId;
@@ -149,7 +149,7 @@ TEST(SQLiteDatabaseTest, DeleteResource_PersistsAcrossReopen)
 
 TEST(SQLiteDatabaseTest, Swap_SameId_IsNoOp)
 {
-    auto dbPath = TestsDir() / "test_swap_sameid.db";
+    std::string dbPath = (TestsDir() / "test_swap_sameid.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -167,7 +167,7 @@ TEST(SQLiteDatabaseTest, Swap_SameId_IsNoOp)
 
 TEST(SQLiteDatabaseTest, Swap_ExchangesData)
 {
-    auto dbPath = TestsDir() / "test_swap.db";
+    std::string dbPath = (TestsDir() / "test_swap.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -193,7 +193,7 @@ TEST(SQLiteDatabaseTest, Swap_ExchangesData)
 
 TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
 {
-    auto dbPath = TestsDir() / "test_rdef_defaults.db";
+    std::string dbPath = (TestsDir() / "test_rdef_defaults.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -211,7 +211,7 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_ReturnsDefaultsOnNewDb)
 
 TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
 {
-    auto dbPath = TestsDir() / "test_rdef_reopen.db";
+    std::string dbPath = (TestsDir() / "test_rdef_reopen.db").string();
     std::filesystem::remove(dbPath);
 
     {
@@ -233,7 +233,7 @@ TEST(SQLiteDatabaseTest, GetResourcesDefinition_PersistsAcrossReopen)
 
 TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)
 {
-    auto dbPath = TestsDir() / "test_swap_reopen.db";
+    std::string dbPath = (TestsDir() / "test_swap_reopen.db").string();
     std::filesystem::remove(dbPath);
 
     ResourceId id1 = InvalidResourceId;
@@ -262,7 +262,7 @@ TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)
 
 TEST(SQLiteDatabaseTest, ListIds_ReturnsInsertedIds)
 {
-    auto dbPath = TestsDir() / "test_listids.db";
+    std::string dbPath = (TestsDir() / "test_listids.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;
@@ -283,7 +283,7 @@ TEST(SQLiteDatabaseTest, ListIds_ReturnsInsertedIds)
 
 TEST(SQLiteDatabaseTest, ListIds_ExcludesDeletedIds)
 {
-    auto dbPath = TestsDir() / "test_listids_delete.db";
+    std::string dbPath = (TestsDir() / "test_listids_delete.db").string();
     std::filesystem::remove(dbPath);
 
     sqlite::SQLiteDatabase db;

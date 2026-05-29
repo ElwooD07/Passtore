@@ -54,10 +54,10 @@ namespace
 sqlite::SQLiteDatabase::SQLiteDatabase()
 { }
 
-void sqlite::SQLiteDatabase::Open(const std::filesystem::path& path, const std::string& password)
+void sqlite::SQLiteDatabase::Open(const std::string& uri, const std::string& password)
 {
-    auto buildNewDb = !std::filesystem::exists(path);
-    m_db.Reconnect(path.string());
+    auto buildNewDb = !std::filesystem::exists(uri);
+    m_db.Reconnect(uri);
 
     if (buildNewDb)
     {

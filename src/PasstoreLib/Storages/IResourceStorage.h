@@ -1,5 +1,4 @@
 #pragma once
-#include <filesystem>
 #include "Storages/Resource.h"
 
 namespace passtore
@@ -20,7 +19,7 @@ namespace passtore
         virtual ~IResourceStorage() { }
 
         // Path in UTF8
-        virtual void Open(const std::filesystem::path& path, const std::string& password) = 0;
+        virtual void Open(const std::string& uri, const std::string& password) = 0;
         virtual void ChangePassword(const std::string& oldPassword, const std::string& newPassword) = 0;
 
         virtual ResourceState GetOne(ResourceId id, Resource& resource) = 0;
