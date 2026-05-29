@@ -5,38 +5,34 @@ Three areas need work to make Passtore a usable product: CRUD is broken (delete/
 
 ---
 
-## Phase 1 — Fix Broken CRUD (unblocks everything else)
+## Phase 1 — Fix Broken CRUD ✅ DONE
 
-1. **Implement `DeleteResource()`** in `src/PasstoreLib/Storages/SQLite/SQLiteDatabase.cpp` — execute `DELETE FROM Resources WHERE ROWID=?`. Without this, the Delete button in the UI silently does nothing.
-2. **Implement `Swap()`** — exchange the `Data` blobs of two ROWIDs inside a transaction. This unblocks row reordering.
-3. **Fix `Cache<K,T>`** in `src/Passtore/Models/Cache.h` — the comment says "so strange, reimplement it". The `m_lastUsed` map is keyed on timestamp, not on access order, making LRU eviction unreliable. Replace with a standard ordered-map or doubly-linked-list LRU.
-4. **Verify Delete flows end-to-end** — `ResourcesListWidget::onDelete` → `ResourceTableModel::deleteRow` → `IResourceStorage::DeleteResource` → DB. Add a test in PasstoreLibTest.
-
-**Verification**: Run PasstoreLibTest; add/delete/swap rows in the running app and confirm persistence across restarts.
+1. ✅ **`DeleteResource()`** — implemented: `DELETE FROM Resources WHERE ROWID=?`.
+2. ✅ **`Swap()`** — implemented: reads both blobs, exchanges them inside a transaction.
+3. ✅ **`Cache<K,T>`** — rewritten as a proper doubly-linked-list LRU (`std::list` + `std::unordered_map`, `splice`-based promotion).
+4. ✅ **Delete flows verified end-to-end** — `ResourcesTableWidget::onDelete` → `ResourceTableModel::DeleteRow` → `SQLiteDatabase::DeleteResource` → DB. Tests `DeleteResource_RemovesFromDB` and `DeleteResource_PersistsAcrossReopen` pass.
 
 ---
 
 ## Phase 2 — Settings Persistence
 
-5. **Design config file format** — use JSON (SimpleJSON already available), stored in the same directory as the `.db` file. Holds: column visibility, column blur flags, and (later) user-defined column definitions.
-6. **Implement `Settings` load/save** — `Settings.cpp` is empty. Add `Settings::Load(path)` and `Settings::Save(path)` using SimpleJSON. Define the schema now so Phase 3 can extend it without a breaking change.
-7. **Wire `SettingsDialog::onSave()`** — currently just calls `hide()`. Make it call `Settings::Save()` and propagate `TableSettings` back to `MainWindow` → `ResourcesListWidget::refresh()`.
-8. **Apply settings at startup** — `MainWindow` must load `Settings` after `Open()` and pass column visibility/blur to the table model.
-9. **Persist `ResourcesDefinition` to DB** — `SQLiteDatabase::GetResourcesDefinition()` is hardcoded. Create a `ResourceDefinitions` table in `BuildOpenedDb()`. Load from it in `GetResourcesDefinition()`, migrate existing DBs by inserting defaults if the table is absent.
+5. ✅ **JSON config format** — `passtore.json` stored alongside the `.db` file, using SimpleJSON.
+6. ✅ **`Settings::Load/Save`** — implemented in `Settings.cpp`; delegates to `LoadTableSettings`/`SaveTableSettings` in `Marshaling.cpp`.
+7. ⚠️ **`SettingsDialog::onSave()`** — `onSave` and `onClose` both just call `hide()`. Propagation and save happen in `MainWindow::onSettings()` after the dialog closes, so settings ARE persisted — but Save and Close are indistinguishable. Save should apply changes; Close should discard them.
+8. ✅ **Settings applied at startup** — `MainWindow` calls `m_settings.Load(settingsPath, defs)` in the constructor before building the UI.
+9. ✅ **`ResourceDefinitions` persisted to DB** — `GetResourcesDefinition()` reads from the `ResourceDefinitions` table seeded on first open. No migration per project policy.
 
-**Verification**: Change column visibility, close app, reopen — settings survive.
+**Remaining**: Fix Save vs Close semantics in `SettingsDialog` (item 7).
 
 ---
 
-## Phase 3 — UI Polish
+## Phase 3 — UI Polish ✅ DONE
 
-13. **FLTK color scheme** — call `Fl::set_color()` / `Fl::background()` once at startup in `main.cpp`. Neutral palette; monospace only for password/critical fields.
-14. **Font consistency** — `FL_HELVETICA` / `FL_HELVETICA_BOLD` globally; `FL_COURIER` for big/critical cell editors.
-15. **Table row height and column widths** — replace magic numbers in `ResourcesListWidget` with values proportional to font size. Add minimum column widths.
-16. **Edit UX** — inline editing stays; a detail side panel for multi-line Notes is a stretch goal.
-17. **Password change dialog** — `ChangePassword()` exists on `IResourceStorage` but has no UI entry point and old-password verification is a TODO. Add a menu item and a 3-field dialog (old password, new password, confirm).
-
-**Verification**: Visual review; no regressions in tests.
+13. ✅ **FLTK color scheme** — `Fl::scheme("gtk+")`, neutral gray palette set in `main.cpp`.
+14. ✅ **Font consistency** — `FL_HELVETICA`/`FL_HELVETICA_BOLD` globally; `FL_COURIER` for big/critical cell editors.
+15. ✅ **Table row height and column widths** — magic numbers replaced with `s_`-prefixed constants proportional to font size in `ResourcesTableWidget.cpp`.
+16. ✅ **Edit UX** — inline editing in place; detail panel deferred as planned.
+17. ✅ **Password change dialog** — menu item wired in `MainWindow`, `ChangePasswordDialog` fully implemented with old/new/confirm fields; `SQLiteDatabase::ChangePassword` implemented and tested.
 
 ---
 
@@ -47,7 +43,7 @@ Three areas need work to make Passtore a usable product: CRUD is broken (delete/
     - No `BeginSync()` / `EndSync()` concept for eventual-consistency backends.
     - `GetNext()` iterates by local ROWID — meaningless on S3.
     - No authentication/session lifecycle beyond `Open()`.
-    - Key material (salt + encrypted phrase + encrypted master key) is already self-contained per record — this is fine and carries forward.
+    - Key material (salt, encrypted phrase, encrypted master key) lives in a separate `Metadata` table in the DB, not per-record — on S3 this would be a separate object (e.g. `passtore.meta`) read once at open time. This is fine and carries forward.
 19. **Proposed interface additions** — document (not implement): `GetPage(offset, count)`, `SyncAll()`, async variant via callback or future.
 20. **Write design note** — `plan/s3-backend.md` describing the above gaps and proposed additions.
 
@@ -70,9 +66,8 @@ Phases 1–3 run in parallel to Phase 4
 - `src/PasstoreLib/Storages/IResourceStorage.h` — consumer interface; schema management is not part of it
 - `src/Passtore/Models/Cache.h` — buggy LRU, needs rewrite
 - `src/Passtore/Settings.h` / `Settings.cpp` — empty persistence layer
-- `src/Passtore/Widgets/SettingsDialog.cpp` — onSave() is a no-op
-- `src/Passtore/Widgets/MainWindow.cpp` — startup settings load goes here
-- `src/Passtore/Widgets/ResourcesListWidget.cpp` — UI polish target
+- `src/Passtore/Widgets/SettingsDialog.cpp` — onSave() needs Save-vs-Close semantics fixed (item 7)
+- `src/Passtore/Widgets/ResourcesTableWidget.cpp` — UI polish target (was ResourcesListWidget)
 - `src/Passtore/main.cpp` — global FLTK theme goes here
 - `plan/` — S3 design note target
 
