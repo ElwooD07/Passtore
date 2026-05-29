@@ -22,6 +22,7 @@ namespace passtore
             ResourceId Upsert(const Resource& resource) override;
             void DeleteResource(ResourceId id) override;
             void Swap(ResourceId first, ResourceId second) override;
+            ResourceIds ListIds() override;
             ResourcesDefinition GetResourcesDefinition() override;
 
         private:

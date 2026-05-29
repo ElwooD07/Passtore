@@ -178,11 +178,5 @@ void ResourceTableModel::RefreshIds()
 {
     m_ids.clear();
     m_cache.Clear();
-    Resource res;
-    ResourceId id = InvalidResourceId;
-    while (m_storage->GetNext(id, res) == ResourceState::Present)
-    {
-        m_ids.push_back(res.id);
-        id = res.id;
-    }
+    m_ids = m_storage->ListIds();
 }

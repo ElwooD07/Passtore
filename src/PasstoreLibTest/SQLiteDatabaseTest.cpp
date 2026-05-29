@@ -259,3 +259,45 @@ TEST(SQLiteDatabaseTest, Swap_PersistsAcrossReopen)
         EXPECT_EQ("Alpha", loaded2.subject);
     }
 }
+
+TEST(SQLiteDatabaseTest, ListIds_ReturnsInsertedIds)
+{
+    auto dbPath = TestsDir() / "test_listids.db";
+    std::filesystem::remove(dbPath);
+
+    sqlite::SQLiteDatabase db;
+    ASSERT_NO_THROW(db.Open(dbPath, "testpass"));
+
+    ResourceId id1 = db.Upsert(MakeResource("Alpha"));
+    ResourceId id2 = db.Upsert(MakeResource("Beta"));
+    ResourceId id3 = db.Upsert(MakeResource("Gamma"));
+
+    ResourceIds ids;
+    ASSERT_NO_THROW(ids = db.ListIds());
+
+    ASSERT_EQ(3u, ids.size());
+    EXPECT_EQ(id1, ids[0]);
+    EXPECT_EQ(id2, ids[1]);
+    EXPECT_EQ(id3, ids[2]);
+}
+
+TEST(SQLiteDatabaseTest, ListIds_ExcludesDeletedIds)
+{
+    auto dbPath = TestsDir() / "test_listids_delete.db";
+    std::filesystem::remove(dbPath);
+
+    sqlite::SQLiteDatabase db;
+    ASSERT_NO_THROW(db.Open(dbPath, "testpass"));
+
+    ResourceId id1 = db.Upsert(MakeResource("Alpha"));
+    ResourceId id2 = db.Upsert(MakeResource("Beta"));
+    ResourceId id3 = db.Upsert(MakeResource("Gamma"));
+    db.DeleteResource(id2);
+
+    ResourceIds ids;
+    ASSERT_NO_THROW(ids = db.ListIds());
+
+    ASSERT_EQ(2u, ids.size());
+    EXPECT_EQ(id1, ids[0]);
+    EXPECT_EQ(id3, ids[1]);
+}

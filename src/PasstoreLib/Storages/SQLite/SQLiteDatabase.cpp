@@ -226,6 +226,17 @@ void sqlite::SQLiteDatabase::Swap(ResourceId first, ResourceId second)
     transaction.Commit();
 }
 
+ResourceIds sqlite::SQLiteDatabase::ListIds()
+{
+    ResourceIds ids;
+    auto query = m_db.CreateQuery("SELECT ROWID FROM Resources ORDER BY ROWID ASC;");
+    while (query.Step())
+    {
+        ids.push_back(static_cast<ResourceId>(query.ColumnInt64(0)));
+    }
+    return ids;
+}
+
 ResourcesDefinition sqlite::SQLiteDatabase::GetResourcesDefinition()
 {
     static const ResourcesDefinition s_result = [this]()
