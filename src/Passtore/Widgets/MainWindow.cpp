@@ -56,14 +56,16 @@ void MainWindow::onSettings(Fl_Widget*, void* ctx)
 {
     auto* self = static_cast<MainWindow*>(ctx);
     auto defs = self->m_storage->GetResourcesDefinition();
-    SettingsDialog dlg(defs, self->m_settings.table);
+    SettingsDialog dlg(defs, self->m_settings.table, [self](const TableSettings& ts)
+    {
+        self->m_settings.table = ts;
+        self->m_settings.Save(self->m_settingsPath);
+    });
     dlg.show();
     while (dlg.shown())
     {
         Fl::wait();
     }
-    self->m_settings.table = dlg.GetTableSettings();
-    self->m_settings.Save(self->m_settingsPath);
 }
 
 void MainWindow::onChangePassword(Fl_Widget*, void* ctx)

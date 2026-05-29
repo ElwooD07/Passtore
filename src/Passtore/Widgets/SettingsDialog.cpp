@@ -8,8 +8,10 @@ static const int s_tabTop = 30;
 static const int s_rowH  = 32;
 static const int s_btnH  = 28;
 
-SettingsDialog::SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current)
+SettingsDialog::SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current,
+                               SaveCallback saveCallback)
     : Fl_Window(s_dlgW, 100, "Settings")
+    , m_saveCallback(std::move(saveCallback))
 {
     int scrollH = std::min(static_cast<int>(defs.size()) * s_rowH + 10, 260);
     int dlgH = s_tabTop + 10 + scrollH + 40 + s_btnH + 10;
@@ -60,19 +62,16 @@ SettingsDialog::SettingsDialog(const ResourcesDefinition& defs, const TableSetti
     set_modal();
 }
 
-TableSettings SettingsDialog::GetTableSettings() const
+void SettingsDialog::onSave(Fl_Widget*, void* ctx)
 {
+    auto* self = static_cast<SettingsDialog*>(ctx);
     TableSettings result;
-    for (auto* w : m_columnWidgets)
+    for (auto* w : self->m_columnWidgets)
     {
         result.columns.push_back(w->GetSets());
     }
-    return result;
-}
-
-void SettingsDialog::onSave(Fl_Widget*, void* ctx)
-{
-    static_cast<SettingsDialog*>(ctx)->hide();
+    self->m_saveCallback(result);
+    self->hide();
 }
 
 void SettingsDialog::onClose(Fl_Widget*, void* ctx)

@@ -15,8 +15,10 @@ namespace passtore
     class SettingsDialog : public Fl_Window
     {
     public:
-        SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current);
-        TableSettings GetTableSettings() const;
+        using SaveCallback = std::function<void(const TableSettings&)>;
+
+        SettingsDialog(const ResourcesDefinition& defs, const TableSettings& current,
+                       SaveCallback saveCallback);
 
     private:
         static void onSave(Fl_Widget*, void* ctx);
@@ -24,5 +26,6 @@ namespace passtore
 
     private:
         std::vector<ColumnSettingsWidget*> m_columnWidgets;
+        SaveCallback m_saveCallback;
     };
 }
