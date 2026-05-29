@@ -18,7 +18,9 @@ if not exist "%APP_EXE%" (
 )
 
 echo [run.bat] Running %APP_EXE%
+pushd "%ROOT_DIR%\build\bin\%CONFIG%"
 "%APP_EXE%"
+popd
 set "APP_EXIT=%ERRORLEVEL%"
 echo [run.bat] Application exited with code %APP_EXIT%
 exit /b %APP_EXIT%

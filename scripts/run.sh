@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG="${1:-Debug}"
-EXE="$PROJECT_ROOT/build/cmake/bin/$CONFIG/Passtore.exe"
+EXE="$PROJECT_ROOT/build/bin/$CONFIG/Passtore.exe"
 
 if [[ ! -f "$EXE" ]]; then
     echo "Error: executable not found at $EXE"
@@ -18,4 +18,6 @@ fi
 
 # Qt DLLs are deployed next to the exe by build.sh (windeployqt)
 echo "==> Running $EXE"
+pushd "$PROJECT_ROOT/build/bin/$CONFIG" > /dev/null
 "$EXE"
+popd > /dev/null
