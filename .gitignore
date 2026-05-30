@@ -1,14 +1,9 @@
 build/
 build-*
 
-# External libraries (not owned by this project)
-ext/fltk/
-ext/TinyAES/
-
 # IDE / tool artifacts
-.claude/
+.claude/settings.local.json
 .vscode/
-*.pro.user
 
 # Runtime data (generated at launch, must not be committed)
 passtore.db
