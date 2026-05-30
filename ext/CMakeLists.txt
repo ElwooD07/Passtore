@@ -29,3 +29,8 @@ set(FLTK_USE_SYSTEM_LIBPNG OFF CACHE BOOL "" FORCE)
 set(FLTK_USE_SYSTEM_LIBJPEG OFF CACHE BOOL "" FORCE)
 set(FLTK_USE_SYSTEM_ZLIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(fltk)
+
+# Nana
+set(MSVC_USE_STATIC_RUNTIME OFF CACHE BOOL "" FORCE)
+add_subdirectory(nana)
+configure_external_target(nana "ext")

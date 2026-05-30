@@ -1,20 +1,11 @@
 #pragma once
-#include <FL/Fl.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Table.H>
-#include <FL/Fl_Table_Row.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Multiline_Input.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Menu_Bar.H>
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Scroll.H>
-#include <FL/Fl_Pack.H>
-#include <FL/Fl_Tabs.H>
-#include <FL/fl_ask.H>
-#include <FL/fl_draw.H>
+#include <nana/gui.hpp>
+#include <nana/gui/widgets/button.hpp>
+#include <nana/gui/widgets/label.hpp>
+#include <nana/gui/widgets/listbox.hpp>
+#include <nana/gui/widgets/panel.hpp>
+#include <nana/gui/widgets/menubar.hpp>
+#include <nana/gui/msgbox.hpp>
 
 #include <stdint.h>
 #include <assert.h>

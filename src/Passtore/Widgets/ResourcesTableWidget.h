@@ -1,29 +1,59 @@
 #pragma once
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Button.H>
+#include <vector>
+#include <functional>
+#include <nana/gui/widgets/textbox.hpp>
 #include "Models/ITableModel.h"
 
 namespace passtore
 {
-    class ResourcesTable;
-
-    /* FLTK container: ResourcesTable fills the top area, Delete button bottom-left, Add button bottom-right. */
-    class ResourcesTableWidget : public Fl_Group
+    /* Nana-based resource list widget with Add/Delete buttons. */
+    class ResourcesTableWidget
     {
     public:
-        ResourcesTableWidget(int x, int y, int w, int h);
+        using DeleteCallback = std::function<void()>;
+        using AddCallback = std::function<void()>;
+
+        ResourcesTableWidget(nana::form& parent, int x, int y, int w, int h);
+        ~ResourcesTableWidget();
 
         void SetModel(ITableModel* model);
         void Refresh();
+        int SelectedRow() const;
+        void BeginShutdown();
+        void SetDeleteCallback(DeleteCallback cb) { m_deleteCallback = cb; }
+        void SetAddCallback(AddCallback cb) { m_addCallback = cb; }
 
     private:
-        static void onAdd(Fl_Widget*, void* ctx);
-        static void onDelete(Fl_Widget*, void* ctx);
+        void InitializeColumns();
+        void RefreshListboxItems();
+        void OnListboxSelected(const nana::arg_listbox& arg);
+        void OnListboxDoubleClick(const nana::arg_mouse& arg);
+        void OnListboxMouseUp(const nana::arg_mouse& arg);
+        void BeginInlineEdit(int row, int col, const nana::point& clickPos);
+        void SaveInlineEdit();
+        void CancelInlineEdit();
+        void HandleInlineFocusLost();
+        void BeginBigEdit(int row, int col);
+        void OnAdd();
+        void OnDelete();
 
     private:
         ITableModel* m_model = nullptr;
-        ResourcesTable* m_tableWidget;
-        Fl_Button* m_btnDelete;
-        Fl_Button* m_btnAdd;
+        nana::form* m_parent = nullptr;
+        nana::listbox* m_listbox = nullptr;
+        nana::textbox* m_inlineEditor = nullptr;
+        nana::button* m_btnDelete = nullptr;
+        nana::button* m_btnAdd = nullptr;
+        int m_editRow = -1;
+        int m_editCol = -1;
+        bool m_inlineDirty = false;
+        int m_bigEditRow = -1;
+        int m_bigEditCol = -1;
+        bool m_isClosing = false;
+        DeleteCallback m_deleteCallback;
+        AddCallback m_addCallback;
+        int m_selectedRow = -1;
+        int m_sortCol = -1;
+        bool m_sortReverse = false;
     };
 }

@@ -51,14 +51,11 @@ static void SeedFakeData(IResourceStorage* storage)
 
 int main(int argc, char* argv[])
 {
+    (void)argc;
+    (void)argv;
+
     try
     {
-        // Step 13: neutral palette — light gray background, near-white inputs
-        Fl::scheme("gtk+");
-        Fl::background(235, 235, 235);
-        Fl::background2(252, 252, 252);
-        Fl::foreground(20, 20, 20);
-
         std::filesystem::path dbPath = "passtore.db";
         std::filesystem::path settingsPath = "passtore.json";
 
@@ -66,14 +63,17 @@ int main(int argc, char* argv[])
         db.Open(dbPath.string(), "000");
         SeedFakeData(&db);
 
-        MainWindow w(&db, settingsPath);
-        w.show();
+        MainWindow mainWindow(&db, settingsPath);
+        mainWindow.Show();
 
-        return Fl::run();
+        return nana::exec();
     }
     catch (const std::exception& ex)
     {
-        fl_alert("Critical error: %s", ex.what());
+        nana::msgbox errorBox("Passtore");
+        errorBox.icon(nana::msgbox::icon_error);
+        errorBox << "Critical error: " << ex.what();
+        errorBox.show();
         return 1;
     }
 }

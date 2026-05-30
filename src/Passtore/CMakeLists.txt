@@ -2,12 +2,9 @@
 
 set(PASSTORE_SOURCES
     Models/ResourceTableModel.cpp
+    Widgets/MainWindow_nana.cpp
+    Widgets/ResourcesTableWidget_nana.cpp
     Settings.cpp
-    Widgets/ChangePasswordDialog.cpp
-    Widgets/ColumnSettingsWidget.cpp
-    Widgets/MainWindow.cpp
-    Widgets/ResourcesTableWidget.cpp
-    Widgets/SettingsDialog.cpp
     main.cpp
     pch.cpp
 )
@@ -16,13 +13,9 @@ set(PASSTORE_HEADERS
     Models/Cache.h
     Models/ITableModel.h
     Models/ResourceTableModel.h
-    Models/ResourceTableModelRoles.h
     Settings.h
-    Widgets/ChangePasswordDialog.h
-    Widgets/ColumnSettingsWidget.h
     Widgets/MainWindow.h
     Widgets/ResourcesTableWidget.h
-    Widgets/SettingsDialog.h
     pch.h
 )
 
@@ -45,7 +38,7 @@ target_link_libraries(Passtore
     TinyAES
     sqlite
     plog
-    fltk
+    nana
     gdi32
     user32
     comctl32

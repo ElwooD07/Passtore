@@ -1,8 +1,6 @@
 #pragma once
 #include <filesystem>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Menu_Bar.H>
-#include <FL/Fl_Box.H>
+#include <memory>
 #include "Settings.h"
 #include "Storages/IResourceStorage.h"
 
@@ -12,21 +10,28 @@ namespace passtore
     class ResourcesTableWidget;
 
     /* Top-level application window: menu bar, resource table, and status bar. */
-    class MainWindow : public Fl_Window
+    class MainWindow
     {
     public:
         MainWindow(IResourceStorage* storage, const std::filesystem::path& settingsPath);
+        ~MainWindow();
+
+        void Show();
+        void OnErrorPublic(const std::string& message);
 
     private:
-        static void onError(void* ctx, const std::string& message);
-        static void onSettings(Fl_Widget*, void* ctx);
-        static void onChangePassword(Fl_Widget*, void* ctx);
+        void OnError(const std::string& message);
+        void OnSettings();
+        void OnChangePassword();
+        void OnUnload(const nana::arg_unload& arg);
 
     private:
         IResourceStorage* m_storage;
-        ResourceTableModel* m_model;
-        ResourcesTableWidget* m_listWidget;
-        Fl_Box* m_statusBar;
+        std::unique_ptr<ResourceTableModel> m_model;
+        std::unique_ptr<ResourcesTableWidget> m_listWidget;
+        std::unique_ptr<nana::form> m_window;
+        nana::label* m_statusBar = nullptr;
+        bool m_isClosing = false;
         Settings m_settings;
         std::filesystem::path m_settingsPath;
     };
